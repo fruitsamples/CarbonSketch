@@ -1,0 +1,437 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0D10D30705C5F7190096E2A7 /* CSkConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D10D2FE05C5F7190096E2A7 /* CSkConstants.h */; };
+		0D10D30805C5F7190096E2A7 /* CSkObjects.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D10D2FF05C5F7190096E2A7 /* CSkObjects.c */; };
+		0D10D30905C5F7190096E2A7 /* CSkObjects.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D10D30005C5F7190096E2A7 /* CSkObjects.h */; };
+		0D10D30C05C5F7190096E2A7 /* CSkUtils.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D10D30305C5F7190096E2A7 /* CSkUtils.c */; };
+		0D10D30D05C5F7190096E2A7 /* CSkUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D10D30405C5F7190096E2A7 /* CSkUtils.h */; };
+		0D10D30E05C5F7190096E2A7 /* CSkWindow.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D10D30505C5F7190096E2A7 /* CSkWindow.c */; };
+		0D10D30F05C5F7190096E2A7 /* CSkWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D10D30605C5F7190096E2A7 /* CSkWindow.h */; };
+		0D10D3FF05C5FADE0096E2A7 /* CSkToolPalette.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D10D3FD05C5FADE0096E2A7 /* CSkToolPalette.c */; };
+		0D10D40005C5FADE0096E2A7 /* CSkToolPalette.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D10D3FE05C5FADE0096E2A7 /* CSkToolPalette.h */; };
+		0D3FE587059906BD005A03D3 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D3FE581059906BD005A03D3 /* main.c */; };
+		0D5F761205CF1EF900C16103 /* CSkDocStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D5F761105CF1EF900C16103 /* CSkDocStorage.h */; };
+		0D7555290829487A0031CEF5 /* CSkDocStorage.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D7555280829487A0031CEF5 /* CSkDocStorage.c */; };
+		0D75552D082948820031CEF5 /* CSkDocumentView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D75552B082948820031CEF5 /* CSkDocumentView.h */; };
+		0D9691DB05CF3F4E00F14345 /* CarbonSketch.nib in Resources */ = {isa = PBXBuildFile; fileRef = 0D9691D505CF3F4E00F14345 /* CarbonSketch.nib */; };
+		0D9691DD05CF3F4E00F14345 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0D9691D905CF3F4E00F14345 /* InfoPlist.strings */; };
+		0D96922605CF401900F14345 /* CSkResources.r in Rez */ = {isa = PBXBuildFile; fileRef = 0D96922505CF401900F14345 /* CSkResources.r */; };
+		0D9D4B9705CED85100A0BC51 /* NavServicesHandling.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D9D4B9505CED85100A0BC51 /* NavServicesHandling.c */; };
+		0D9D4B9805CED85100A0BC51 /* NavServicesHandling.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D9D4B9605CED85100A0BC51 /* NavServicesHandling.h */; };
+		0DFFF92E0A110AEC004E0748 /* CSkPDFPasswordEntry.c in Sources */ = {isa = PBXBuildFile; fileRef = 0DFFF92C0A110AEC004E0748 /* CSkPDFPasswordEntry.c */; };
+		0DFFF92F0A110AEC004E0748 /* CSkPDFPasswordEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DFFF92D0A110AEC004E0748 /* CSkPDFPasswordEntry.h */; };
+		845DD43B05CB8283001F93CF /* CSkPrinting.c in Sources */ = {isa = PBXBuildFile; fileRef = 845DD43705CB8283001F93CF /* CSkPrinting.c */; };
+		845DD43C05CB8283001F93CF /* CSkPrinting.h in Headers */ = {isa = PBXBuildFile; fileRef = 845DD43805CB8283001F93CF /* CSkPrinting.h */; };
+		845DD47205CB82DA001F93CF /* CSkShapes.c in Sources */ = {isa = PBXBuildFile; fileRef = 845DD47005CB82DA001F93CF /* CSkShapes.c */; };
+		845DD47305CB82DA001F93CF /* CSkShapes.h in Headers */ = {isa = PBXBuildFile; fileRef = 845DD47105CB82DA001F93CF /* CSkShapes.h */; };
+		84DDD48D0A0BBA2A0061310A /* CSkDocumentView.c in Sources */ = {isa = PBXBuildFile; fileRef = 84DDD48C0A0BBA2A0061310A /* CSkDocumentView.c */; };
+		8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0D10D2FE05C5F7190096E2A7 /* CSkConstants.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = CSkConstants.h; path = Source/CSkConstants.h; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		0D10D2FF05C5F7190096E2A7 /* CSkObjects.c */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.c; name = CSkObjects.c; path = Source/CSkObjects.c; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		0D10D30005C5F7190096E2A7 /* CSkObjects.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = CSkObjects.h; path = Source/CSkObjects.h; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		0D10D30305C5F7190096E2A7 /* CSkUtils.c */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.c; name = CSkUtils.c; path = Source/CSkUtils.c; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		0D10D30405C5F7190096E2A7 /* CSkUtils.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CSkUtils.h; path = Source/CSkUtils.h; sourceTree = "<group>"; };
+		0D10D30505C5F7190096E2A7 /* CSkWindow.c */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.c; name = CSkWindow.c; path = Source/CSkWindow.c; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		0D10D30605C5F7190096E2A7 /* CSkWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CSkWindow.h; path = Source/CSkWindow.h; sourceTree = "<group>"; };
+		0D10D3FD05C5FADE0096E2A7 /* CSkToolPalette.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = CSkToolPalette.c; path = Source/CSkToolPalette.c; sourceTree = "<group>"; };
+		0D10D3FE05C5FADE0096E2A7 /* CSkToolPalette.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CSkToolPalette.h; path = Source/CSkToolPalette.h; sourceTree = "<group>"; };
+		0D3FE581059906BD005A03D3 /* main.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = main.c; path = Source/main.c; sourceTree = "<group>"; };
+		0D5F761105CF1EF900C16103 /* CSkDocStorage.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = CSkDocStorage.h; path = Source/CSkDocStorage.h; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
+		0D7555280829487A0031CEF5 /* CSkDocStorage.c */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.c; name = CSkDocStorage.c; path = Source/CSkDocStorage.c; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		0D75552B082948820031CEF5 /* CSkDocumentView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CSkDocumentView.h; path = Source/CSkDocumentView.h; sourceTree = "<group>"; };
+		0D9691D605CF3F4E00F14345 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = CarbonSketch.nib; sourceTree = "<group>"; };
+		0D9691DA05CF3F4E00F14345 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = English; path = InfoPlist.strings; sourceTree = "<group>"; };
+		0D96922505CF401900F14345 /* CSkResources.r */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.rez; name = CSkResources.r; path = Resources/CSkResources.r; sourceTree = "<group>"; };
+		0D9D4B9505CED85100A0BC51 /* NavServicesHandling.c */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.c; name = NavServicesHandling.c; path = Source/NavServicesHandling.c; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		0D9D4B9605CED85100A0BC51 /* NavServicesHandling.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = NavServicesHandling.h; path = Source/NavServicesHandling.h; sourceTree = "<group>"; };
+		0DFFF92C0A110AEC004E0748 /* CSkPDFPasswordEntry.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = CSkPDFPasswordEntry.c; path = Source/CSkPDFPasswordEntry.c; sourceTree = "<group>"; };
+		0DFFF92D0A110AEC004E0748 /* CSkPDFPasswordEntry.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CSkPDFPasswordEntry.h; path = Source/CSkPDFPasswordEntry.h; sourceTree = "<group>"; };
+		20286C33FDCF999611CA2CEA /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		4A9504C8FFE6A3BC11CA0CBA /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
+		4A9504CAFFE6A41611CA0CBA /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
+		845DD43705CB8283001F93CF /* CSkPrinting.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = CSkPrinting.c; path = Source/CSkPrinting.c; sourceTree = "<group>"; };
+		845DD43805CB8283001F93CF /* CSkPrinting.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CSkPrinting.h; path = Source/CSkPrinting.h; sourceTree = "<group>"; };
+		845DD47005CB82DA001F93CF /* CSkShapes.c */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.c; name = CSkShapes.c; path = Source/CSkShapes.c; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		845DD47105CB82DA001F93CF /* CSkShapes.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = CSkShapes.h; path = Source/CSkShapes.h; sourceTree = "<group>"; tabWidth = 8; usesTabs = 1; };
+		84DDD48C0A0BBA2A0061310A /* CSkDocumentView.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = CSkDocumentView.c; path = Source/CSkDocumentView.c; sourceTree = "<group>"; };
+		8D0C4E960486CD37000505A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D0C4E970486CD37000505A6 /* CarbonSketch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CarbonSketch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D0C4E910486CD37000505A6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0D9691D405CF3F4E00F14345 /* English.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				0D9691D505CF3F4E00F14345 /* CarbonSketch.nib */,
+				0D9691D905CF3F4E00F14345 /* InfoPlist.strings */,
+			);
+			path = English.lproj;
+			sourceTree = "<group>";
+		};
+		195DF8CFFE9D517E11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D0C4E970486CD37000505A6 /* CarbonSketch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		20286C29FDCF999611CA2CEA /* QuartzDraw */ = {
+			isa = PBXGroup;
+			children = (
+				20286C2AFDCF999611CA2CEA /* Sources */,
+				20286C2CFDCF999611CA2CEA /* Resources */,
+				195DF8CFFE9D517E11CA2CBB /* Products */,
+			);
+			name = QuartzDraw;
+			sourceTree = "<group>";
+		};
+		20286C2AFDCF999611CA2CEA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				0D3FE581059906BD005A03D3 /* main.c */,
+				0D10D2FE05C5F7190096E2A7 /* CSkConstants.h */,
+				0D5F761105CF1EF900C16103 /* CSkDocStorage.h */,
+				0D7555280829487A0031CEF5 /* CSkDocStorage.c */,
+				84DDD48C0A0BBA2A0061310A /* CSkDocumentView.c */,
+				0D75552B082948820031CEF5 /* CSkDocumentView.h */,
+				845DD47005CB82DA001F93CF /* CSkShapes.c */,
+				845DD47105CB82DA001F93CF /* CSkShapes.h */,
+				0D10D2FF05C5F7190096E2A7 /* CSkObjects.c */,
+				0D10D30005C5F7190096E2A7 /* CSkObjects.h */,
+				0D10D30505C5F7190096E2A7 /* CSkWindow.c */,
+				0D10D30605C5F7190096E2A7 /* CSkWindow.h */,
+				0D10D3FD05C5FADE0096E2A7 /* CSkToolPalette.c */,
+				0D10D3FE05C5FADE0096E2A7 /* CSkToolPalette.h */,
+				0DFFF92C0A110AEC004E0748 /* CSkPDFPasswordEntry.c */,
+				0DFFF92D0A110AEC004E0748 /* CSkPDFPasswordEntry.h */,
+				0D9D4B9505CED85100A0BC51 /* NavServicesHandling.c */,
+				0D9D4B9605CED85100A0BC51 /* NavServicesHandling.h */,
+				845DD43705CB8283001F93CF /* CSkPrinting.c */,
+				845DD43805CB8283001F93CF /* CSkPrinting.h */,
+				0D10D30305C5F7190096E2A7 /* CSkUtils.c */,
+				0D10D30405C5F7190096E2A7 /* CSkUtils.h */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		20286C2CFDCF999611CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				0D9691D405CF3F4E00F14345 /* English.lproj */,
+				8D0C4E960486CD37000505A6 /* Info.plist */,
+				0D96922505CF401900F14345 /* CSkResources.r */,
+				20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				20286C33FDCF999611CA2CEA /* Carbon.framework */,
+				4A9504CAFFE6A41611CA0CBA /* CoreServices.framework */,
+				4A9504C8FFE6A3BC11CA0CBA /* ApplicationServices.framework */,
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		8D0C4E8A0486CD37000505A6 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D10D30705C5F7190096E2A7 /* CSkConstants.h in Headers */,
+				0D10D30905C5F7190096E2A7 /* CSkObjects.h in Headers */,
+				0D10D30D05C5F7190096E2A7 /* CSkUtils.h in Headers */,
+				0D10D30F05C5F7190096E2A7 /* CSkWindow.h in Headers */,
+				0D10D40005C5FADE0096E2A7 /* CSkToolPalette.h in Headers */,
+				845DD43C05CB8283001F93CF /* CSkPrinting.h in Headers */,
+				845DD47305CB82DA001F93CF /* CSkShapes.h in Headers */,
+				0D9D4B9805CED85100A0BC51 /* NavServicesHandling.h in Headers */,
+				0D5F761205CF1EF900C16103 /* CSkDocStorage.h in Headers */,
+				0D75552D082948820031CEF5 /* CSkDocumentView.h in Headers */,
+				0DFFF92F0A110AEC004E0748 /* CSkPDFPasswordEntry.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8D0C4E890486CD37000505A6 /* CarbonSketch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 845E3EEF093129F5004CE555 /* Build configuration list for PBXNativeTarget "CarbonSketch" */;
+			buildPhases = (
+				8D0C4E8A0486CD37000505A6 /* Headers */,
+				8D0C4E8C0486CD37000505A6 /* Resources */,
+				8D0C4E8F0486CD37000505A6 /* Sources */,
+				8D0C4E910486CD37000505A6 /* Frameworks */,
+				8D0C4E940486CD37000505A6 /* Rez */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CarbonSketch;
+			productInstallPath = "$(HOME)/Applications";
+			productName = QuartzDraw;
+			productReference = 8D0C4E970486CD37000505A6 /* CarbonSketch.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		20286C28FDCF999611CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 845E3EF3093129F5004CE555 /* Build configuration list for PBXProject "CarbonSketch" */;
+			compatibilityVersion = "Xcode 2.4";
+			hasScannedForEncodings = 1;
+			mainGroup = 20286C29FDCF999611CA2CEA /* QuartzDraw */;
+			projectDirPath = "";
+			projectRoot = "";
+			shouldCheckCompatibility = 1;
+			targets = (
+				8D0C4E890486CD37000505A6 /* CarbonSketch */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D0C4E8C0486CD37000505A6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D9691DB05CF3F4E00F14345 /* CarbonSketch.nib in Resources */,
+				0D9691DD05CF3F4E00F14345 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXRezBuildPhase section */
+		8D0C4E940486CD37000505A6 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D96922605CF401900F14345 /* CSkResources.r in Rez */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXRezBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D0C4E8F0486CD37000505A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D3FE587059906BD005A03D3 /* main.c in Sources */,
+				0D10D30805C5F7190096E2A7 /* CSkObjects.c in Sources */,
+				0D10D30C05C5F7190096E2A7 /* CSkUtils.c in Sources */,
+				0D10D30E05C5F7190096E2A7 /* CSkWindow.c in Sources */,
+				0D10D3FF05C5FADE0096E2A7 /* CSkToolPalette.c in Sources */,
+				845DD43B05CB8283001F93CF /* CSkPrinting.c in Sources */,
+				845DD47205CB82DA001F93CF /* CSkShapes.c in Sources */,
+				0D9D4B9705CED85100A0BC51 /* NavServicesHandling.c in Sources */,
+				0D7555290829487A0031CEF5 /* CSkDocStorage.c in Sources */,
+				84DDD48D0A0BBA2A0061310A /* CSkDocumentView.c in Sources */,
+				0DFFF92E0A110AEC004E0748 /* CSkPDFPasswordEntry.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		0D9691D505CF3F4E00F14345 /* CarbonSketch.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				0D9691D605CF3F4E00F14345 /* English */,
+			);
+			name = CarbonSketch.nib;
+			sourceTree = "<group>";
+		};
+		0D9691D905CF3F4E00F14345 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				0D9691DA05CF3F4E00F14345 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		845E3EF0093129F5004CE555 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = Static;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = CarbonSketch;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-W",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Development;
+		};
+		845E3EF1093129F5004CE555 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = Static;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = CarbonSketch;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-W",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		845E3EF2093129F5004CE555 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = Static;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = CarbonSketch;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-W",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		845E3EF4093129F5004CE555 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ZERO_LINK = YES;
+			};
+			name = Development;
+		};
+		845E3EF5093129F5004CE555 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Deployment;
+		};
+		845E3EF6093129F5004CE555 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		845E3EEF093129F5004CE555 /* Build configuration list for PBXNativeTarget "CarbonSketch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				845E3EF0093129F5004CE555 /* Development */,
+				845E3EF1093129F5004CE555 /* Deployment */,
+				845E3EF2093129F5004CE555 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		845E3EF3093129F5004CE555 /* Build configuration list for PBXProject "CarbonSketch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				845E3EF4093129F5004CE555 /* Development */,
+				845E3EF5093129F5004CE555 /* Deployment */,
+				845E3EF6093129F5004CE555 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 20286C28FDCF999611CA2CEA /* Project object */;
+}

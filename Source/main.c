@@ -38,16 +38,21 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 #include <Carbon/Carbon.h>
 
+#include "NavServicesHandling.h"
 #include "CSkWindow.h"
 #include "CSkToolPalette.h"
 #include "CSkConstants.h"
 
 // Keep our nibRef around as global (CreateNibReference is expensive)
 IBNibRef    gOurNibRef;
+FSRef	    gApplicationBundleFSRef;
+
+Boolean gOnTiger    = false;
+Boolean gOnPanther  = false;
 
 //-----------------------------------------------------------------------------------------------------------------------
 static	pascal	OSStatus AppEventHandlerProc( EventHandlerCallRef inCallRef, EventRef inEvent, void* inUserData )
@@ -68,48 +73,78 @@ static	pascal	OSStatus AppEventHandlerProc( EventHandlerCallRef inCallRef, Event
             case kHICommandNew:
                 NewCSkWindow(gOurNibRef, CSkToolPalette(gOurNibRef));
 				err = noErr;
-				break;
-            
-            case kHICommandAbout:
-            {
-    //          DisplayAboutBox();  -- the built-in one is good enough, for now
-            }
-            break;
-            
-            case kHICommandOpen:
-            {
-    //          OpenFiles();	-- real soon now ...
-            }
-            break;
+			break;
+				
+			case kHICommandOpen:
+				err = OpenAFile();
+			break;
         }
     }
     return err;
-}
+}   // AppEventHandlerProc
 
 // --------------------------------------------------------------------------------------------------------------
-static pascal OSErr	DoOpenApp(const AppleEvent* inputEvent, AppleEvent* outputEvent, SInt32 handlerRefCon)
+static pascal OSErr DoOpenApp(const AppleEvent* inputEvent, AppleEvent* outputEvent, SRefCon handlerRefCon)
 {
 #pragma unused (inputEvent, outputEvent, handlerRefCon)
-	return NewCSkWindow(gOurNibRef, CSkToolPalette(gOurNibRef));
+    WindowRef w = NewCSkWindow(gOurNibRef, CSkToolPalette(gOurNibRef));
+    return (w != NULL ? noErr: -1);
 } // DoOpenApp
 
+// --------------------------------------------------------------------------------------------------------------
+static pascal OSErr DoOpenDocuments(const AppleEvent* inputEvent, AppleEvent* outputEvent, SRefCon handlerRefCon)
+{
+#pragma unused (outputEvent, handlerRefCon)
+    AEDescList documentsList;
+    OSErr err = AEGetParamDesc(inputEvent, keyDirectObject, typeAEList, &documentsList);
+    require_noerr(err, CantGetDocList);
+    
+    OpenSelectedFiles(documentsList);
+    err = noErr;
+    
+    AEDisposeDesc(&documentsList);
+    
+CantGetDocList:
+    return err;
+} // DoOpenDocument
+
+
+//-----------------------------------------------
+static Boolean SystemVersionRequired(int version)
+{
+    SInt32 result;
+    Gestalt( gestaltSystemVersion, &result );
+    gOnPanther = (result >= 0x1030);
+    gOnTiger =  (result >= 0x1040);
+    return (result >= version);
+}
 
 //---------------------------------------------------------------------------------------------
 int main()
 {
     static const EventTypeSpec  sApplicationEvents[] = {{ kEventClassCommand, kEventCommandProcess }};
-    OSErr                       err;
+    OSErr err;
     
+    if (!SystemVersionRequired(0x1020))
+    {
+	DialogRef theAlert;
+	CreateStandardAlert(kAlertStopAlert, CFSTR("Need 10.2 or later!"), NULL, NULL, &theAlert);
+	RunStandardAlert(theAlert, NULL, NULL);
+	return 0;
+    }
+    
+    ProcessSerialNumber psn = {0, kCurrentProcess};
+    err = GetProcessBundleLocation(&psn, &gApplicationBundleFSRef);
+
     err = CreateNibReference(CFSTR("CarbonSketch"), &gOurNibRef );
     require_noerr( err, CantGetNibRef );
 
     err = SetMenuBarFromNib( gOurNibRef, CFSTR("MenuBar") );
     require_noerr( err, SetMenuBarFromNib_FAILED );
 
-	AEInstallEventHandler(kCoreEventClass, kAEOpenApplication, DoOpenApp, 0, false);
-//	AEInstallEventHandler(kCoreEventClass, kAEOpenApplication, DoOpenDocument, 0, false);
-//	AEInstallEventHandler(kCoreEventClass, kAEOpenApplication, DoPrintDocument, 0, false);
-//	AEInstallEventHandler(kCoreEventClass, kAEOpenApplication, DoQuitApp, 0, false);
+    AEInstallEventHandler(kCoreEventClass, kAEOpenApplication, DoOpenApp, 0, false);
+    AEInstallEventHandler(kCoreEventClass, kAEOpenDocuments, DoOpenDocuments, 0, false);
+//  AEInstallEventHandler(kCoreEventClass, kAEPrintDocuments, DoPrintDocuments, 0, false);
 
     InstallApplicationEventHandler( NewEventHandlerUPP(AppEventHandlerProc), 
                                     GetEventTypeCount(sApplicationEvents), 

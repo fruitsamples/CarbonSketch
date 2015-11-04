@@ -40,7 +40,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -49,33 +49,60 @@
 
 #include <Carbon/Carbon.h>
 
+#ifndef __CSKCONSTANTS__
+#include "CSkConstants.h"
+#endif
+
 #ifndef __CSKOBJECTS__
 #include "CSkObjects.h"
 #endif
 
 struct DocStorage	
 {
-    WindowRef           ownerWindow;        // reference back to owning window
+    WindowRef           ownerWindow;        // back reference to owning window
     WindowRef           toolPalette;        // holds current tool selection and drawing attributes
-    Rect                windowRect;         // keep it around, for convenience (topLeft = (0, 0))
-    DrawObjList         objList;            // our drawing objects
-	CFDataRef			pdfData;			// in case we pasted in a pdf from the pasteboard
+	WindowRef			overlayWindow;
+	HIViewRef			overlayView;
     CGContextRef        bmCtx;              // 1x1 bitmap context for hit testing
-    Point               docSize;            // unscaled
-    int                 gridWidth;          // unscaled
+	HIViewRef			theScrollView;
+	HIViewRef			sketchView;			// the sketch view inside the scroll view
     CGAffineTransform   displayCTM;         // apply to windowContext before drawing document content into it (scales + offsets)
-    Point               scrollPosition;     // topLeft of window content relative to document background origin
-    float               scale;              // passed to CGContextScaleCTM
-    Point               docTopLeft;         // unscaled
+    DrawObjList         objList;            // our drawing objects
+    CGRect				pageRect;
+    CGPoint				pageTopLeft;        // because our "page" is being drawn offset on the background
     CGPoint             dupOffset;          // offset when duplicating selected objects
-    PMPageFormat	pageFormat;
-    PMPrintSettings	printSettings;
-    Handle              flattenedPageFormat;
+    float				gridWidth;          // unscaled
+    float               scale;              // passed to CGContextScaleCTM
+    PMPageFormat		pageFormat;
+    PMPrintSettings		printSettings;
+    CFDataRef           flattenedPageFormat;
+	CFDataRef			pdfData;			// in case we pasted in a pdf from the pasteboard
+	CGImageSourceRef	cgImgSrc;			// background image
+	CGPDFDocumentRef	pdfDocument;		// temporary storage while waiting for PW-protected PDF to be unlocked
+	size_t				indexOrPageNo;		// index of image in cgImgSrc, or page number in PDF
+	Boolean				pdfIsProtected;		// remember whether the pdf in window background is PW-protected
+	Boolean				pdfAskForPassword;	// if so, draw the window content as "password entry"
+	Boolean				pdfIsUnlocked;		// for PW-protected PDFs, after providing the correct PW
+	Boolean				shouldDrawGrabbers;	// whether or not the "grabbers" on selected objects should be drawn
+	Boolean				shouldDrawGrid;		// whether or not the background grid should be drawn
 };
 typedef struct DocStorage DocStorage, *DocStoragePtr;
 
+DocStorage* CreateDocumentStorage(WindowRef window, WindowRef toolPalette);
+DocStorage* GetWindowDocStoragePtr(WindowRef window);
 
-void ReleaseDocumentStorage(DocStorage* docStP);
+void	ReleaseDocumentStorage(DocStorage* docStP);
 
+// Assuming a CGContextRef is set up correctly, the above DocStorage is all that's needed to draw the document page.
+void DrawThePage(CGContextRef ctx, const DocStorage* docStP);
+
+Boolean SetPageNumberOrImageIndex(DocStorage* docStP, size_t pageNumberOrImageIndex);
+
+// Background is either a grid page, or a CGImage from ImageIO, or a PDF content
+void DrawDocumentBackgroundGrid(CGContextRef ctx, CGSize docSize, float gridWidth);
+void DrawPDFData(CGContextRef ctx, CGPDFDocumentRef document, size_t pageNo, CGRect destRect);
+
+CFPropertyListRef CSkCreatePropertyList(DocStoragePtr docStP);
+void SetObjectListFromPropertyList(DocStoragePtr docStP, CFPropertyListRef propList);
 
 #endif

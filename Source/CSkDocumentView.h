@@ -1,8 +1,8 @@
 /*
-    File:       CSkShapes.h
+    File:       CSkDocumentView.h
         
-    Contains:	Externally visible interface to CSkShape implementation.
-                
+    Contains:	Prototype of CSkDocumentViewCreate().
+
     Disclaimer:	IMPORTANT:  This Apple software is supplied to you by Apple Computer, Inc.
                 ("Apple") in consideration of your agreement to the following terms, and your
                 use, installation, modification or redistribution of this Apple software
@@ -10,7 +10,7 @@
                 please do not use, install, modify or redistribute this Apple software.
 
                 In consideration of your agreement to abide by the following terms, and subject
-                to these terms, Apple grants you a personal, non-exclusive license, under AppleÕs
+                to these terms, Apple grants you a personal, non-exclusive license, under Appleâ€™s
                 copyrights in this original Apple software (the "Apple Software"), to use,
                 reproduce, modify and redistribute the Apple Software, with or without
                 modifications, in source and/or binary forms; provided that if you redistribute
@@ -38,38 +38,11 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2005 Apple Computer, Inc., All Rights Reserved
 */
-
-
-#ifndef __CSKSHAPES__
-#define __CSKSHAPES__
 
 #include <Carbon/Carbon.h>
 
-typedef struct CSkShape CSkShape, *CSkShapePtr;
+OSStatus CSkDocumentViewCreate(HIViewRef parentView, const Rect* inBounds, const HIViewID* inViewID);
 
-ByteCount   CSkShapeSize(void);
-CSkShapePtr CSkShapeCreate(int shapeType);
-void        CSkShapeRelease(CSkShape* sh);
-
-void	    CSkShapeSetType(CSkShapePtr sh, int shapeType);
-int         CSkShapeGetType(const CSkShape* sh);
-CGPoint*    CSkShapeGetPoints(CSkShapePtr sh);
-CGPoint     CSkShapeGetRRectRadii(const CSkShape* sh);
-CGMutablePathRef CSkShapeGetPath(const CSkShape* sh);
-CGRect      CSkShapeGetBounds(CSkShape* sh);
-void        CSkShapeSetBounds(CSkShape* sh, CGRect rect);
-
-void        CSkShapeOffset(CSkShape* sh, float offsetX, float offsetY);
-void        CSkShapeResize(CSkShape* sh, int* grabber, CGPoint newPt);
-int	    FindGrabberHit(CSkShape* shape, CGPoint pt);
-Boolean	    NextGrabberRect(CSkShape* sh, int* ioGrabber, CGRect* grabRect);
-
-void	    CSkShapeSetPointAtIndex(CSkShape* sh, CGPoint pt, int index);
-void	    CSkShapeAddPolygonPoint(CSkShape* sh, CGPoint pt);
-
-void	    AddCSkShapeToDict(CSkShape* sh, CFMutableDictionaryRef objDict);
-CSkShapePtr CreateCSkShapeFromDict(CFDictionaryRef objDict);
-
-#endif
+OSStatus OverlayViewHandler( EventHandlerCallRef inCaller, EventRef inEvent, void* inRefcon );

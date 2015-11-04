@@ -39,9 +39,11 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 1999-2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 1999-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 #include <Carbon/Carbon.h>
 
-OSStatus SaveAsPDFDocument (WindowRef w, void* ourDataP);
+OSStatus OpenAFile( void );
+OSStatus SaveAsPDFDocument(WindowRef w, void* ourDataP);
+OSStatus SaveAsCSkDocument(WindowRef w, void* ourDataP);

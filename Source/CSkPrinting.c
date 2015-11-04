@@ -38,7 +38,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -53,26 +53,26 @@
 //-----------------------------------------------------------------------------------------------------------------------
 static OSStatus MyCreatePageFormat(PMPrintSession printSession, PMPageFormat *pageFormat)
 {
-        OSStatus status = PMCreatePageFormat(pageFormat);
-            
-        //  Note that PMPageFormat is not session-specific, but calling
-        //  PMSessionDefaultPageFormat assigns values specific to the printer
-        //  associated with the current printing session.
-        if ((status == noErr) && (*pageFormat != kPMNoPageFormat))
-            status = PMSessionDefaultPageFormat(printSession, *pageFormat);
-	    
-	return status;
+    OSStatus status = PMCreatePageFormat(pageFormat);
+	
+    //  Note that PMPageFormat is not session-specific, but calling
+    //  PMSessionDefaultPageFormat assigns values specific to the printer
+    //  associated with the current printing session.
+    if ((status == noErr) && (*pageFormat != kPMNoPageFormat))
+	status = PMSessionDefaultPageFormat(printSession, *pageFormat);
+	
+    return status;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
 // (Borrowed from /Developer/Examples/Printing/App/)
-static OSStatus DoPageSetupDialog(PMPrintSession printSession, PMPageFormat* pageFormat, Handle* flattendedPageFormat)
+static OSStatus DoPageSetupDialog(PMPrintSession printSession, PMPageFormat* pageFormat, CFDataRef* flattenedPageFormat)
 {
     OSStatus	status = noErr;
     
     if (*pageFormat == kPMNoPageFormat)    // Set up a valid PageFormat object
     {
-		MyCreatePageFormat(printSession, pageFormat);
+	MyCreatePageFormat(printSession, pageFormat);
     }
     else
     {
@@ -85,13 +85,12 @@ static OSStatus DoPageSetupDialog(PMPrintSession printSession, PMPageFormat* pag
         status = PMSessionPageSetupDialog(printSession, *pageFormat, &accepted);
         if (status == noErr && !accepted)
             status = kPMCancel;		// user clicked Cancel button
-    }	
-                            
+    }
+	
     //	If the user did not cancel, flatten and save the PageFormat object with our document
-    if ((status == noErr) && (flattendedPageFormat != NULL))
+    if ((status == noErr) && (flattenedPageFormat != NULL))
     {
-//        status = FlattenAndSavePageFormat(*pageFormat);
-        status = PMFlattenPageFormat(*pageFormat, flattendedPageFormat);
+        status = PMFlattenPageFormatToCFData(*pageFormat, flattenedPageFormat);
     }
     
     return status;
@@ -123,7 +122,7 @@ static OSStatus DoPrintLoop(DocStoragePtr docStP, PMPrintSession printSession, P
 
     status = CopyWindowTitleAsCFString(docStP->ownerWindow, &jobName);
 
-    status = PMSetJobNameCFString(printSettings, jobName);
+    status = PMPrintSettingsSetJobName(printSettings, jobName);
     CFRelease (jobName);
 
     //	Get the user's Print dialog selection for first and last pages to print.
@@ -154,17 +153,10 @@ static OSStatus DoPrintLoop(DocStoragePtr docStP, PMPrintSession printSession, P
     //	manager handles this.  So we just iterate through the document from the
     //	first page to be printed, to the last.
     
-    // Now, tell the printing system that we promise never to use any Quickdraw calls:
-    {
-        CFStringRef s[1] = { kPMGraphicsContextCoreGraphics };
-        CFArrayRef  graphicsContextsArray = CFArrayCreate(NULL, (const void**)s, 1, &kCFTypeArrayCallBacks);
-        PMSessionSetDocumentFormatGeneration(printSession, kPMDocumentFormatPDF, graphicsContextsArray, NULL);
-        CFRelease(graphicsContextsArray);
-    }
-    
     if (status == noErr)
     {
-        status = PMSessionBeginDocument(printSession, printSettings, pageFormat);
+		// Now, tell the printing system that we promise never to use any Quickdraw calls:
+        status = PMSessionBeginCGDocument(printSession, printSettings, pageFormat);
         check(status == noErr);
         if (status == noErr)
         {
@@ -179,13 +171,11 @@ static OSStatus DoPrintLoop(DocStoragePtr docStP, PMPrintSession printSession, P
                 check(status == noErr);
                 if (status == noErr)
                 {
-                    status = PMSessionGetGraphicsContext(printSession, kPMGraphicsContextCoreGraphics, (void**)&printingCtx);
+                    status = PMSessionGetCGGraphicsContext(printSession, &printingCtx);
                     check(status == noErr);
                     if (status == noErr) 
                     {
-						// Will have to do some work to position/scale objects correctly on page, and to support multi-page documents
-						CGRect pageSize = CGRectMake(0, 0, docStP->docSize.h, docStP->docSize.v);
-						DrawIntoPDFPage(printingCtx, pageSize, docStP, pageNumber);
+			DrawThePage(printingCtx, docStP);
                     }
                                     
                     tempErr = PMSessionEndPage(printSession);
@@ -283,27 +273,27 @@ void ProcessPrintCommand(DocStoragePtr docStP, UInt32 commandID)
     
     if ( PMCreateSession(&printSession) == noErr )
     {
-		if (commandID == kHICommandPageSetup)
-		{
-			DoPageSetupDialog(printSession, &docStP->pageFormat, &docStP->flattenedPageFormat);
-		}
-		else if (commandID == kHICommandPrint)
-		{
-			if (docStP->pageFormat == NULL)
-			{
-				err = MyCreatePageFormat(printSession, &docStP->pageFormat);
-			}
+	if (commandID == kHICommandPageSetup)
+	{
+	    DoPageSetupDialog(printSession, &docStP->pageFormat, &docStP->flattenedPageFormat);
+	}
+	else if (commandID == kHICommandPrint)
+	{
+	    if (docStP->pageFormat == NULL)
+	    {
+		err = MyCreatePageFormat(printSession, &docStP->pageFormat);
+	    }
 
-			if (DoPrintDialog(printSession, docStP->pageFormat, &docStP->printSettings) == noErr)
-			{
-				DoPrintLoop(docStP, printSession, docStP->pageFormat, docStP->printSettings);
-			}
-		}
-		PMRelease(printSession);
+	    if (DoPrintDialog(printSession, docStP->pageFormat, &docStP->printSettings) == noErr)
+	    {
+		DoPrintLoop(docStP, printSession, docStP->pageFormat, docStP->printSettings);
+	    }
+	}
+	PMRelease(printSession);
     }
     else
     {
-		fprintf(stderr, "PMCreateSession FAILED\n");
+	fprintf(stderr, "PMCreateSession FAILED\n");
     }
 }   // ProcessPrintCommand
 

@@ -38,7 +38,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -50,7 +50,26 @@
 #include "CSkUtils.h"
 #include "CSkShapes.h"
 
-typedef struct CSkObject CSkObject, *CSkObjectPtr;  // struct CSkObject defined in QuartzDrawObjects.c
+
+struct CSkObjectAttributes  // as set in ToolPalette
+{
+    float           lineWidth;
+    CGLineCap       lineCap;
+    CGLineJoin      lineJoin;
+    int             lineStyle;
+    CGrgba          strokeColor;
+    CGrgba          fillColor;
+};
+typedef struct CSkObjectAttributes CSkObjectAttributes;
+
+
+typedef struct CSkObject CSkObject, *CSkObjectPtr;  // struct CSkObject defined in CSkObjects.c
+
+// Currently, CSkObjects are limited to lines, rectangles, ovals and roundRectangles
+// (see enumeration of shape selectors in CSkConstants.h); but obviously,
+// we'll want to extand that in the future.
+// CSkObjects are stored in a double-linked list, and drawn from back to front.
+
 
 struct DrawObjList
 {
@@ -60,7 +79,7 @@ struct DrawObjList
 typedef struct DrawObjList  DrawObjList, *DrawObjListPtr;
 
 
-CSkObjectPtr    CreateDrawObj(WindowRef toolPalette, int shapeType);
+CSkObjectPtr	CreateCSkObj(CSkObjectAttributes* attributes, CSkShapePtr sh);
 CSkObjectPtr    CopyDrawObject(const CSkObject* obj);
 void		ReleaseDrawObj(CSkObjectPtr drawObj);
 void		ReleaseDrawObjList(DrawObjListPtr objList);
@@ -72,17 +91,17 @@ void		SetStrokeColorOfSelecteds(DrawObjListPtr objListP, CGrgba* color);
 void		SetStrokeAlphaOfSelecteds(DrawObjListPtr objListP, float alpha);
 void		SetFillColorOfSelecteds(DrawObjListPtr objListP, CGrgba* color);
 void		SetFillAlphaOfSelecteds(DrawObjListPtr objListP, float alpha);
-void		SetFilledOfSelecteds(DrawObjListPtr objListP, Boolean filled);
-void		SetDrawObjAttributesFromToolPalette(CSkObjectPtr obj, WindowRef toolPalette);
-void		SetSelectedDrawObjAttributesFromToolPalette(DrawObjListPtr objListP, WindowRef toolPalette);
+void		CSkObjectSetAttributes(CSkObjectPtr obj, CSkObjectAttributes* attributes);
+void		CSkSetObjAttributesIfSelected(DrawObjListPtr objListP, CSkObjectAttributes* attributes);
+
+CSkObjectAttributes* CSkObjectGetAttributes(CSkObjectPtr obj);
 
 void		GetLineAttributes(const CSkObject* obj, float* width, CGLineCap* cap, CGLineJoin* join, int* style);
 
 int		GetDrawObjShapeType( const CSkObject* drawObj );
-CSkShape*       GetCSkObjectShape( const CSkObject* drawObj );
+CSkShapePtr	CSkObjectGetShape( const CSkObject* drawObj );
 float		GetFillAlpha( const CSkObject* drawObj );
 float		GetStrokeAlpha( const CSkObject* drawObj );
-void		CopyDrawObjShape( CSkObjectPtr drawObj, CSkShapePtr sh );
 Boolean		IsDrawObjSelected( const CSkObject* drawObj );
 void		SetDrawObjSelectState(CSkObjectPtr drawObj, Boolean selected);
 void		CSkObjListSetSelectState(DrawObjListPtr objList, Boolean state);
@@ -91,22 +110,25 @@ void		CSkObjListSelectWithinRect(DrawObjList* objList, CGRect selectionRect);
 void		SetContextStateForDrawObject(CGContextRef ctx, const CSkObject* obj);
 void		RenderCSkObject ( CGContextRef ctx, const CSkObject* obj, Boolean drawSelection);
 void		RenderDrawObjList( CGContextRef ctx, const DrawObjList* objListP, Boolean drawSelection);
-void		RenderSelectedDrawObjs(CGContextRef ctx, const DrawObjList* objListP, float offsetX, float offsetY, float alpha);
+void		RenderSelectedDrawObjs(CGContextRef ctx, const DrawObjList* objListP, float dx, float dy, float alpha);
 void		MakeDrawObjTransparent(CSkObject* obj, float alpha);
-void		MoveSelectedDrawObjs(DrawObjList* objListP, float offsetX, float offsetY);
+void		MoveSelectedDrawObjs(DrawObjList* objListP, float dx, float dy);
 CSkObjectPtr    DrawObjListHitTesting ( DrawObjListPtr objList, 
 					CGContextRef bmCtx,
 					CGAffineTransform m, 
 					CGPoint windowCtxPt, 
 					CGPoint docPt, 
-					UInt32* outFlags);
+					int* outGrabber);
 
 void		AddDrawObjToList(DrawObjListPtr objList, CSkObjectPtr obj);
 void		RemoveSelectedDrawObjs(DrawObjListPtr objList);
-void		DuplicateSelectedDrawObjs(DrawObjListPtr objList, CGPoint offset);
+void		DuplicateSelectedDrawObjs(DrawObjListPtr objList, float dx, float dy);
 void		MoveObjectForward(DrawObjListPtr objList);
 void		MoveObjectToFront(DrawObjListPtr objList);
 void		MoveObjectBackward(DrawObjListPtr objList);
 void		MoveObjectToBack(DrawObjListPtr objList);
+
+CFMutableArrayRef CSkObjectListConvertToCFArray(CSkObjectPtr firstItem);
+void	CSkConvertCFArrayToDrawObjectList(CFArrayRef objArray, DrawObjList* objList);
 
 #endif

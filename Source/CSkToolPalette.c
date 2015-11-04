@@ -38,7 +38,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -49,16 +49,14 @@
 
 static WindowRef sToolPaletteWindow = NULL;     // make sure we only make a single one!
 
+// ToolPaletteStorage holds the state of whatever the ToolPalette reflects:
+// currently selected tool, line drawing specs, and stroke and fill color
+// (including alpha: see CGrgba in CSkUtils.h).
+
 struct ToolPaletteStorage	
 {
-    int         selectedTool;
-    float       lineWidth;
-    CGLineCap   lineCap;
-    CGLineJoin  lineJoin;
-    int         lineStyle;
-    CGrgba      strokeColor;
-    CGrgba      fillColor;
-    Boolean     filled;
+    int   selectedTool;
+    CSkObjectAttributes attr;
 };
 typedef struct ToolPaletteStorage ToolPaletteStorage;
 
@@ -72,93 +70,93 @@ static ToolPaletteStorage* CreateToolPaletteStorage()
     
     // Set defaults in tPS - these should match the checked menu items in the Nib file
     
-    tPS->selectedTool    = kLineTool;
-    tPS->lineWidth       = 4.0;
-    tPS->lineCap         = kCGLineCapButt;
-    tPS->lineJoin        = kCGLineJoinMiter;
-    tPS->lineStyle       = kStyleSolid;
-    tPS->filled          = true;
-    ConvertRGBColorToCGrgba(&rgbBlack, 1.0, &tPS->strokeColor);
-    ConvertRGBColorToCGrgba(&rgbWhite, 1.0, &tPS->fillColor);
+    tPS->selectedTool		= kLineTool;
+    tPS->attr.lineWidth		= 4.0;
+    tPS->attr.lineCap		= kCGLineCapButt;
+    tPS->attr.lineJoin		= kCGLineJoinMiter;
+    tPS->attr.lineStyle		= kStyleSolid;
+    ConvertRGBColorToCGrgba(&rgbBlack, 1.0, &tPS->attr.strokeColor);
+    ConvertRGBColorToCGrgba(&rgbWhite, 1.0, &tPS->attr.fillColor);
 
     return tPS;
 }
 
 
-//------------------------------------------------------------------------ Accessors
+//-------------------------------------------------------------------- Accessors
 int CSkToolPaletteGetTool(WindowRef toolPalette)
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
     return tps->selectedTool;
 }
 
+CSkObjectAttributes* CSkToolPaletteGetAttributes( WindowRef toolPalette )
+{
+    ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
+    return &tps->attr;
+}
+
 float CSkToolPaletteGetLineWidth(WindowRef toolPalette)
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    return tps->lineWidth;
+    return tps->attr.lineWidth;
 }
 
 CGLineCap CSkToolPaletteGetLineCap(WindowRef toolPalette)
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    return tps->lineCap;
+    return tps->attr.lineCap;
 }
 
 CGLineJoin CSkToolPaletteGetLineJoin(WindowRef toolPalette)
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    return tps->lineJoin;
+    return tps->attr.lineJoin;
 }
 
 int CSkToolPaletteGetLineStyle(WindowRef toolPalette)
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    return tps->lineStyle;
+    return tps->attr.lineStyle;
 }
 
 CGrgba* CSkToolPaletteGetStrokeColor( WindowRef toolPalette, CGrgba* outStrokeColor )
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    *outStrokeColor = tps->strokeColor;
+    *outStrokeColor = tps->attr.strokeColor;
     return outStrokeColor;
 }
 
 void CSkToolPaletteSetStrokeColor( WindowRef toolPalette, CGrgba* strokeColor )
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    tps->strokeColor = *strokeColor;
+    tps->attr.strokeColor = *strokeColor;
 }
 
 CGrgba* CSkToolPaletteGetFillColor( WindowRef toolPalette, CGrgba* outFillColor )
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    *outFillColor = tps->fillColor;
+    *outFillColor = tps->attr.fillColor;
     return outFillColor;
 }
 
 void CSkToolPaletteSetFillColor( WindowRef toolPalette, CGrgba* fillColor )
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    tps->fillColor = *fillColor;
-}
-
-Boolean CSkToolPaletteGetFilled( WindowRef toolPalette )
-{
-    ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    return tps->filled;
+    tps->attr.fillColor = *fillColor;
 }
 
 void CSkToolPaletteSetContextState( CGContextRef ctx, WindowRef toolPalette)
 {
     ToolPaletteStorage* tps = (ToolPaletteStorage*)GetWRefCon(toolPalette);
-    CGContextSetLineWidth(ctx, tps->lineWidth);
-    CGContextSetLineCap(ctx, tps->lineCap);
-    CGContextSetLineJoin(ctx, tps->lineJoin);
-    CGContextSetStrokeColor( ctx, (float*)&(tps->strokeColor));
-    CGContextSetFillColor( ctx, (float*)&(tps->fillColor));
+    CGContextSetLineWidth(ctx, tps->attr.lineWidth);
+    CGContextSetLineCap(ctx, tps->attr.lineCap);
+    CGContextSetLineJoin(ctx, tps->attr.lineJoin);
+    CGContextSetStrokeColor( ctx, (CGFloat*)&(tps->attr.strokeColor));
+    CGContextSetFillColor( ctx, (CGFloat*)&(tps->attr.fillColor));
 }
 
 //-------------------------------------------------
+// One of those spots where the code needs to be in sync with the design in the NIB:
 static int LineWidthToMenuItem(float lineWidth)
 {
     const float widths[] = { 0, 1, 2, 4, 8, 16 };
@@ -173,27 +171,30 @@ static int LineWidthToMenuItem(float lineWidth)
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
-static void InternalSyncPopups(float lineWidth, CGLineCap lineCap, CGLineJoin lineJoin, int lineStyle)
+// Each time the selected object changes, the ToolPalette needs to reflect the current state of the
+// selected object. This is accomplished in the "CSkToolPaletteSyncPopups" routine, below.
+
+static void InternalSyncPopups(const CSkObjectAttributes* attr)
 {
     ControlID   cntlID      = { kControlSignaturePalette, kLineWidthPopup };
+    short       itemNo      = LineWidthToMenuItem(attr->lineWidth);
     ControlRef  control;
-    short       itemNo      = LineWidthToMenuItem(lineWidth);
     
     GetControlByID( sToolPaletteWindow, &cntlID, &control );
     SetControlData(control, kControlEntireControl, kControlBevelButtonMenuValueTag, sizeof(itemNo), &itemNo);
     
     cntlID.id = kLineCapPopup;
-    itemNo = (short)lineCap + 1;
+    itemNo = (short)attr->lineCap + 1;
     GetControlByID( sToolPaletteWindow, &cntlID, &control );
     SetControlData( control, kControlEntireControl, kControlBevelButtonMenuValueTag, sizeof(itemNo), &itemNo);
 
     cntlID.id = kLineJoinPopup;
-    itemNo = (short)lineJoin + 1;
+    itemNo = (short)attr->lineJoin + 1;
     GetControlByID( sToolPaletteWindow, &cntlID, &control );
     SetControlData( control, kControlEntireControl, kControlBevelButtonMenuValueTag, sizeof(itemNo), &itemNo);
     
     cntlID.id = kLineStylePopup;
-    itemNo = (short)lineStyle;
+    itemNo = (short)attr->lineStyle;
     GetControlByID( sToolPaletteWindow, &cntlID, &control );
     SetControlData( control, kControlEntireControl, kControlBevelButtonMenuValueTag, sizeof(itemNo), &itemNo);
 }
@@ -211,22 +212,19 @@ static void SyncAlphaSliders(float strokeAlpha, float fillAlpha)
     SetControlValue(control, 100 * fillAlpha);
 }
 
-void CSkToolPaletteSyncPopups ( const CSkObject* obj )
+void CSkToolPaletteSyncPopups (CSkObject* obj)
 {
     if (obj != NULL)
     {
-        float       lineWidth;
-        CGLineCap   lineCap;
-        CGLineJoin  lineJoin;
-        int         lineStyle;
-    
-        GetLineAttributes(obj, &lineWidth, &lineCap, &lineJoin, &lineStyle);
-        InternalSyncPopups(lineWidth, lineCap, lineJoin, lineStyle);
-	SyncAlphaSliders(GetStrokeAlpha(obj), GetFillAlpha(obj));
+        InternalSyncPopups(CSkObjectGetAttributes(obj));
+		SyncAlphaSliders(GetStrokeAlpha(obj), GetFillAlpha(obj));
     }
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
+// We want our sliders for stroke alpha and fill alpha and scale to provide immediate feedback. 
+// Sending a corresponding HICommand to the frontmost document window from within the ActionProc does just that.
+
 static void SliderControlActionProc( ControlRef control, ControlPartCode partCode )
 {
 #pragma unused(partCode)
@@ -235,7 +233,6 @@ static void SliderControlActionProc( ControlRef control, ControlPartCode partCod
 
     memset(&cmd, 0, sizeof(HICommand));
     
-//    fprintf(stderr, "SliderControlActionProc value = %d\n", (int)GetControlValue(control));
     GetControlID(control, &cntlID);
     if (cntlID.id == kStrokeAlphaSlider)
     {
@@ -245,6 +242,11 @@ static void SliderControlActionProc( ControlRef control, ControlPartCode partCod
     {
         cmd.commandID = kCmdFillAlphaChanged;
     }
+	else if (cntlID.id == kScaleSlider)
+	{
+        cmd.commandID = kCmdScalingValueChanged;
+	}
+	
     if (cmd.commandID != 0)
     {
         WindowRef window = FrontNonFloatingWindow();	
@@ -257,6 +259,9 @@ static void SliderControlActionProc( ControlRef control, ControlPartCode partCod
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
+// Our ToolPaletteEventHandler needs to respond to all the HICommands sent by the various controls,
+// deal specially with the "alpha" sliders, and hook into kEventWindowClose to deallocate the toolPStorage.
+
 static pascal OSStatus ToolPaletteEventHandler( EventHandlerCallRef inCallRef, EventRef inEvent, void* inUserData )
 {
     #pragma unused ( inCallRef )
@@ -274,27 +279,6 @@ static pascal OSStatus ToolPaletteEventHandler( EventHandlerCallRef inCallRef, E
         {
             DisposePtr( (Ptr) toolPStorage );
             SetWRefCon(toolPalette, 0);
-//          fprintf(stderr, "ToolPalette: closed via kEventClassWindow/kEventWindowClose\n");
-        }
-        else if ( eventKind == kEventWindowClickContentRgn )    // only deal with "alpha" sliders, here
-        {
-            Point           where;
-            ControlRef      control;
-            ControlID       cntlID;
-            ControlPartCode partCode;
-            
-            GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(Point), NULL, &where);
-            QDGlobalToLocalPoint(GetWindowPort(toolPalette), &where);
-
-            control = FindControlUnderMouse ( where, toolPalette, &partCode );
-            if (control != NULL)
-            {
-                GetControlID(control, &cntlID);
-                if ((cntlID.id == kStrokeAlphaSlider) || (cntlID.id == kFillAlphaSlider))
-                {
-                    (void) HandleControlClick ( control, where, 0, SliderControlActionProc );
-                }
-            }
         }
         break;
         
@@ -311,85 +295,85 @@ static pascal OSStatus ToolPaletteEventHandler( EventHandlerCallRef inCallRef, E
             {
                 // Line Width
                 case kCmdWidthNone:      
-                        toolPStorage->lineWidth = 0;
+                        toolPStorage->attr.lineWidth = 0;
                         windowCmd.commandID = kCmdLineWidthChanged;
                         break;
                 case kCmdWidthOne:       
-                        toolPStorage->lineWidth = 1;
+                        toolPStorage->attr.lineWidth = 1;
                         windowCmd.commandID = kCmdLineWidthChanged;
                         break;
                 case kCmdWidthTwo:       
-                        toolPStorage->lineWidth = 2;
+                        toolPStorage->attr.lineWidth = 2;
                         windowCmd.commandID = kCmdLineWidthChanged;
                         break;
                 case kCmdWidthFour:      
-                        toolPStorage->lineWidth = 4;
+                        toolPStorage->attr.lineWidth = 4;
                         windowCmd.commandID = kCmdLineWidthChanged;
                         break;
                 case kCmdWidthEight:     
-                        toolPStorage->lineWidth = 8;
+                        toolPStorage->attr.lineWidth = 8;
                         windowCmd.commandID = kCmdLineWidthChanged;
                         break;
                 case kCmdWidthSixteen:   
-                        toolPStorage->lineWidth = 16;
+                        toolPStorage->attr.lineWidth = 16;
                         windowCmd.commandID = kCmdLineWidthChanged;
                         break;
                 case kCmdWidthThinner:   
-                        if (toolPStorage->lineWidth > 0)
-                                toolPStorage->lineWidth -= 1;
+                        if (toolPStorage->attr.lineWidth > 0)
+                                toolPStorage->attr.lineWidth -= 1;
                         windowCmd.commandID = kCmdLineWidthChanged;
                         break;
                 case kCmdWidthThicker:
-                        toolPStorage->lineWidth += 1;
+                        toolPStorage->attr.lineWidth += 1;
                         windowCmd.commandID = kCmdLineWidthChanged;
                         break;
 
                 // Line Cap
                 case kCmdCapButt:        
-                        toolPStorage->lineCap = kCGLineCapButt;
+                        toolPStorage->attr.lineCap = kCGLineCapButt;
                         windowCmd.commandID = kCmdLineCapChanged;
                         break;
                 case kCmdCapRound:       
-                        toolPStorage->lineCap = kCGLineCapRound;
+                        toolPStorage->attr.lineCap = kCGLineCapRound;
                         windowCmd.commandID = kCmdLineCapChanged;
                         break;
                 case kCmdCapSquare:      
-                        toolPStorage->lineCap = kCGLineCapSquare;
+                        toolPStorage->attr.lineCap = kCGLineCapSquare;
                         windowCmd.commandID = kCmdLineCapChanged;
                         break;
 
                 // Line Join
                 case kCmdJoinMiter:
-                        toolPStorage->lineJoin = kCGLineJoinMiter;
+                        toolPStorage->attr.lineJoin = kCGLineJoinMiter;
                         windowCmd.commandID = kCmdLineJoinChanged;
                         break;
                 case kCmdJoinRound:
-                        toolPStorage->lineJoin = kCGLineJoinRound;
+                        toolPStorage->attr.lineJoin = kCGLineJoinRound;
                         windowCmd.commandID = kCmdLineJoinChanged;
                         break;
                 case kCmdJoinBevel:
-                        toolPStorage->lineJoin = kCGLineJoinBevel;
+                        toolPStorage->attr.lineJoin = kCGLineJoinBevel;
                         windowCmd.commandID = kCmdLineJoinChanged;
                         break;
 
                 // Line Style
                 case kCmdStyleSolid:
-                        toolPStorage->lineStyle = kStyleSolid;
+                        toolPStorage->attr.lineStyle = kStyleSolid;
                         windowCmd.commandID = kCmdLineStyleChanged;
                         break;
                 case kCmdStyleDashed:
-                        toolPStorage->lineStyle = kStyleDashed;
+                        toolPStorage->attr.lineStyle = kStyleDashed;
                         windowCmd.commandID = kCmdLineStyleChanged;
                         break;
 
                 // Color selection
                 case kCmdStrokeColor:    
-                        PickSomeColor(&toolPStorage->strokeColor);
+                        PickSomeColor(&toolPStorage->attr.strokeColor);
                         windowCmd.commandID = kCmdStrokeColorChanged;
                         break;
 
                 case kCmdFillColor:      
-                        PickSomeColor(&toolPStorage->fillColor);
+                        PickSomeColor(&toolPStorage->attr.fillColor);
                         windowCmd.commandID = kCmdFillColorChanged;
                         break;
                         
@@ -418,10 +402,12 @@ static pascal OSStatus ToolPaletteEventHandler( EventHandlerCallRef inCallRef, E
         }
         break;
     }
+	
     return err;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
+// This ControlEventHandler is installed on the buttons to select the current "Tool"
 static pascal OSStatus ControlEventHandler( EventHandlerCallRef inCallRef, EventRef inEvent, void* inUserData )
 {
 //  UInt32      eventClass  = GetEventClass(inEvent);
@@ -438,21 +424,20 @@ static pascal OSStatus ControlEventHandler( EventHandlerCallRef inCallRef, Event
         
         GetControlID(control, &cntlID);
 
-        if ((cntlID.id >= kArrowTool) && (cntlID.id <= kRRectTool))
+        if ((cntlID.id >= kFirstTool) && (cntlID.id <= kLastTool))
         {
             toolPStorage->selectedTool = cntlID.id;
         
             // Deselect old tool, select new tool
         
-            for (i = kArrowTool; i <= kRRectTool; ++i)
+            for (i = kFirstTool; i <= kLastTool; ++i)
             {                
                 int cntlValue = (i == toolPStorage->selectedTool ? 1 : 0);
                 
                 cntlID.id = i;      // cntlID.signature = 'Tool', from above
                 err = GetControlByID( wRef, &cntlID, &control );
                 require_noerr( err, CantGetControlByID );
-//		SetControlValue(control, cntlValue);
-		SetControl32BitValue(control, cntlValue);
+				SetControl32BitValue(control, cntlValue);
             }
         }
     }
@@ -468,11 +453,11 @@ WindowRef CSkToolPalette( IBNibRef theNibRef )
 {
     static EventHandlerUPP  gToolPaletteEventProc   = NULL;
 	static EventHandlerUPP  gControlEventProc		= NULL;
+	static ControlActionUPP	sliderControlActionUPP  = NULL;
 	
     if (sToolPaletteWindow == NULL)
     {
         const EventTypeSpec toolPaletteEvents[] =   {   { kEventClassCommand, kEventCommandProcess },
-                                                        { kEventClassWindow, kEventWindowClickContentRgn },
                                                         { kEventClassWindow, kEventWindowClose }
                                                     };
                                                     
@@ -493,7 +478,7 @@ WindowRef CSkToolPalette( IBNibRef theNibRef )
 			}
 			
 			tPS = CreateToolPaletteStorage();
-            SetWRefCon( sToolPaletteWindow, (long)tPS );
+            SetWRefCon( sToolPaletteWindow, (SRefCon)tPS );
             
             err = InstallWindowEventHandler (   sToolPaletteWindow, 
                                                 gToolPaletteEventProc, 
@@ -519,7 +504,7 @@ WindowRef CSkToolPalette( IBNibRef theNibRef )
                 err = GetControlByID( sToolPaletteWindow, &cntlID, &control );
                 SetControlValue(control, 1);  
 
-                for (i = kArrowTool; i <= kFillColorBtn; ++i)
+                for (i = kFirstTool; i <= kLastTool; ++i)
                 {
                     cntlID.id = i;
                     
@@ -534,8 +519,20 @@ WindowRef CSkToolPalette( IBNibRef theNibRef )
                                                         NULL );
                     require_noerr( err, CantInstallControlEventHandler );
                 }
-                
-                // Set up the bevel button min/max values according to their menu items
+
+   				if ( sliderControlActionUPP == NULL )
+					sliderControlActionUPP  = NewControlActionUPP( SliderControlActionProc );
+				
+				// Set up the sliders
+				for (i = kStrokeAlphaSlider; i <= kScaleSlider; ++i)
+				{
+					cntlID.id = i;
+					err	= GetControlByID( sToolPaletteWindow, &cntlID, &control );	
+					require_noerr( err, CantInstallControlEventHandler );	
+					SetControlAction( control, sliderControlActionUPP );
+				}
+
+				// Set up the bevel button min/max values according to their menu items
                 cntlID.id = kLineWidthPopup;
                 GetControlByID( sToolPaletteWindow, &cntlID, &control );
                 SetControlMinimum(control, 0);
@@ -556,7 +553,7 @@ WindowRef CSkToolPalette( IBNibRef theNibRef )
                 SetControlMinimum(control, 0);
                 SetControlMaximum(control, 2);
 
-                InternalSyncPopups(tPS->lineWidth, tPS->lineCap, tPS->lineJoin, tPS->lineStyle);
+                InternalSyncPopups(&tPS->attr);
            }
             
     CantInstallWindowEventHandler:

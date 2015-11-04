@@ -38,7 +38,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -48,8 +48,9 @@
 #include <Carbon/Carbon.h>
 #include "CSkDocStorage.h"
 
-OSStatus    NewCSkWindow(IBNibRef theNibRef, WindowRef toolPalette);
-void		DrawIntoPDFPage(CGContextRef pdfContext, CGRect pageBounds, const DocStorage* docStP, UInt32 pageNumber);
+WindowRef	NewCSkWindow(IBNibRef theNibRef, WindowRef toolPalette);
+void		AttachPDFToWindow(WindowRef window, CFDataRef pdfData);
+OSStatus	OpenSelectedFiles(AEDescList selection);
 
 
 #endif

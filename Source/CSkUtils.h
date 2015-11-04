@@ -38,7 +38,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -48,28 +48,46 @@
 #include <Carbon/Carbon.h>
 
 struct CGrgba {
-    float   r;
-    float   g;
-    float   b;
-    float   a;
+    CGFloat   r;
+    CGFloat   g;
+    CGFloat   b;
+    CGFloat   a;
 };
 typedef struct CGrgba CGrgba;
 
 OSStatus	PickSomeColor(CGrgba* theColor);
-void		ConvertRGBColorToCGrgba(const RGBColor* inRGB, float alpha, CGrgba* outCGrgba);
-void		QDPortToCGCoordinates(Point* inPtArray, Point* outPtArray, int numPoints, Rect* portBounds);
-void		CGRectToQDRect(const int windowHeight, const CGRect cgRect, Rect* outQDRect);
+void		ConvertRGBColorToCGrgba(const RGBColor* inRGB, CGFloat alpha, CGrgba* outCGrgba);
 
 void		SendWindowCloseEvent( WindowRef window );
 void		SendWindowCommandEvent( WindowRef window, HICommand* command );
 void		SendControlEventHit(ControlRef control);
 
-int			MapToolToShape(int toolID);
+int		MapToolToShape(int toolID);
 
-CMProfileRef    OpenGenericProfile(void);
 CGColorSpaceRef GetGenericRGBColorSpace(void);
 
 PasteboardRef   GetPasteboard(void);
 
-#endif
+void AddFloatToDict(CFMutableDictionaryRef objDict, CFStringRef key, float value);
+float GetFloatFromDict(CFDictionaryRef theDict, CFStringRef key);
 
+void AddIntegerToDict(CFMutableDictionaryRef objDict, CFStringRef key, int value);
+int GetIntegerFromDict(CFDictionaryRef theDict, CFStringRef key);
+
+void AddRGBAColorToDict(CFMutableDictionaryRef objDict, CFStringRef key, CGrgba* color);
+void GetRGBAColorFromDict(CFDictionaryRef theDict, CFStringRef key, CGrgba* color);
+
+// Path utilities
+CGMutablePathRef CopyPathWithOffset(CGPathRef path, float dx, float dy);
+CGPoint* ExtractControlPoints(CGMutablePathRef path, int* outNumPoints);
+
+CGMutablePathRef 
+CreateResizedPath(CGMutablePathRef oldPath, int ctlPointIndex, CGPoint newPt);
+
+void AddPathToDict(CFMutableDictionaryRef theDict, CGPathRef path);
+CGMutablePathRef GetPathFromDict(CFDictionaryRef theDict);
+
+//------------------------------------
+// void ShowPoint(char* msg, CGPoint pt);
+
+#endif

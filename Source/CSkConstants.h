@@ -38,7 +38,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -48,24 +48,73 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
 
-// Geometry (shape) selectors - the items 1 through 4
-enum {
-	kUndefined		= 0,
-	kLineShape		= 1,
-	kRectShape		= 2,
-	kOvalShape		= 3,
-	kRRectShape		= 4
-};
-// maybe we want to add later polygons, regular closed polygons, quadratics, cubics, or even general paths?
+// We require 10.2. Certain APIs only are available on Pather (10.3) or Tiger (10.4).
+// We set the corresponding globals at startup (in main.c).
 
+extern Boolean gOnTiger;
+extern Boolean gOnPanther;
+
+enum {
+    kCSkSignature		= 'CSkh',
+    kCSkPerWindowStorage	= 'WStg'
+};
+
+
+enum {
+    kUnsupportedFileFormat	= 1    // error code range???
+};
 
 // Window controls
+
+enum { 
+    kDocumentViewSignature	= 'CskV',
+    kDocumentBoundsParam	= 'Boun',
+    kCmdChangeDocumentSize	= 'CDCs'
+ };
+
+enum {
+    kPWStaticID1		= 10,	// "The PDF is password protected."
+    kPWStaticID2		= 11,	// "Please type the password below."
+    kPWStaticID3		= 12,	// "Password:"
+    kPWStaticID4		= 13	// "Invalid password"
+};
+
+enum {
+    kScrollbarWidth		= 15
+};
 
 enum {
     kControlSignatureMainWindow = 'CSkM',
     kScrollHorizontalID		= 1,
-    kScrollVerticalID		= 2,
-    kScalePopupID		= 3
+    kScrollVerticalID		= 2
+};
+
+enum {
+    kMinimumScaleCtlValue	= 0,	// see CSkWindow.c, ScaleCtlValueToScalingFactor about how to convert
+    kMaximumScaleCtlValue	= 80
+};
+
+
+// default document size and position in window
+enum {
+    kDefaultDocWidth		= 576,
+    kDefaultDocHeight		= 720,
+    kLeftMargin			= 18,	// 0.25 inch
+    kTopMargin			= 18,
+    kGridWidth			= 18
+};
+    
+// Geometry (shape) selectors
+enum {
+    kUndefined			= 0,
+    kLineShape			= 1,	// Values of constants used in program logic:
+    kQuadBezier			= 2,	// Don't change these 1 - 2 - 3 values!
+    kCubicBezier		= 3,	// "
+    kRectShape			= 4,
+    kOvalShape			= 5,
+    kRRectShape			= 6,
+    kFreePolygon		= 7,	// as opposed to regular polygons
+    // and so on ...
 };
 
 //---------------------------------------------------------------------------------------------
@@ -75,18 +124,28 @@ enum {
 enum {
     kControlSignaturePalette	= 'Tool',
     kArrowTool			= 1,
+    kFirstTool			= kArrowTool,
     kLineTool			= 2,
     kRectTool			= 3,
     kOvalTool			= 4,
     kRRectTool			= 5,
-    kLineWidthPopup		= 6,
-    kLineCapPopup		= 7,
-    kLineJoinPopup		= 8,
-    kLineStylePopup		= 9,
-    kStrokeColorBtn		= 10,
-    kFillColorBtn		= 11,
-    kStrokeAlphaSlider		= 12,
-    kFillAlphaSlider		= 13
+    kPolyTool			= 6,
+    kQuadTool			= 7,
+    kBezierTool			= 8,
+    kLastTool			= kBezierTool,
+    
+    kLineWidthPopup		= 10,
+    kLineCapPopup		= 11,
+    kLineJoinPopup		= 12,
+    kLineStylePopup		= 13,
+    
+    kStrokeColorBtn		= 20,
+    kFillColorBtn		= 21,
+    
+    // keep the following numbers consecutive 
+    kStrokeAlphaSlider		= 30,
+    kFillAlphaSlider		= 31,
+    kScaleSlider		= 32
 };
 
 // Line Width menu items
@@ -130,38 +189,60 @@ enum
     kCmdStyleDashed		= 'Stl2'
 };
 
-// Scalefactor menu item commands
-enum
-{
-    kCmdScale50			= 'S050',
-    kCmdScale100		= 'S100',
-    kCmdScale200		= 'S200',
-    kMaxScaleMenuItem		= 3
-};
-
 // Arrange menu item commands
 enum 
 {
-    kCmdMoveForward	    = 'Fwrd',
-    kCmdMoveToFront	    = 'Frnt',
-    kCmdMoveBackward	    = 'Bwrd',
-    kCmdMoveToBack	    = 'Back'
+    kCmdMoveForward		= 'Fwrd',
+    kCmdMoveToFront		= 'Frnt',
+    kCmdMoveBackward		= 'Bwrd',
+    kCmdMoveToBack		= 'Back'
 };
 
 // Other menu or window commands
 enum
 {   
-    kCmdWritePDF            = 'WPDF',
-    kCmdDuplicate           = 'Dupl',
-    kCmdLineWidthChanged    = 'LwCh',
-    kCmdLineCapChanged      = 'LcCh',
-    kCmdLineJoinChanged     = 'LjCh',
-    kCmdLineStyleChanged    = 'LsCh',
-    kCmdStrokeColorChanged  = 'SCCh',
-    kCmdFillColorChanged    = 'FCCh',
-    kCmdStrokeAlphaChanged  = 'Ssld',
-    kCmdFillAlphaChanged    = 'Fsld'
+    kCmdWritePDF		= 'WPDF',
+    kCmdDuplicate		= 'Dupl',
+    kCmdLineWidthChanged	= 'LwCh',
+    kCmdLineCapChanged		= 'LcCh',
+    kCmdLineJoinChanged		= 'LjCh',
+    kCmdLineStyleChanged	= 'LsCh',
+    kCmdStrokeColorChanged	= 'SCCh',
+    kCmdFillColorChanged	= 'FCCh',
+    kCmdStrokeAlphaChanged	= 'Ssld',
+    kCmdFillAlphaChanged	= 'Fsld',
+    kCmdScalingValueChanged	= 'Scal',
+    kCmdNextPageOrImageIndex	= 'Next',
+    kCmdPrevPageorImageIndex	= 'Prev',
+    kCmdFirstPageOrImageIndex	= 'Frst',
+    kCmdLastPageOrImageIndex	= 'Last'
 };
 
+// Keys for object dictionary
+
+#define kX0		    CFSTR("x0")
+#define kY0		    CFSTR("y0")
+#define kX1		    CFSTR("x1")
+#define kY1		    CFSTR("y1")
+#define kX2		    CFSTR("x2")
+#define kY2		    CFSTR("y2")
+#define kX3		    CFSTR("x3")
+#define kY3		    CFSTR("y3")
+#define krX		    CFSTR("rX")
+#define krY		    CFSTR("rY")
+#define kPath		    CFSTR("path")
+#define	kPathElementType    CFSTR("pathElementType")
+#define kKeyShapeType	    CFSTR("shapeType")
+#define kKeyLineWidth	    CFSTR("lineWidth")
+#define kKeyLineCap	    CFSTR("lineCap")
+#define kKeyLineJoin	    CFSTR("lineJoin")
+#define kKeyLineStyle	    CFSTR("lineStyle")
+#define kKeyStrokeColor	    CFSTR("strokeColor")
+#define kKeyFillColor	    CFSTR("fillColor")
+#define kKeyRed		    CFSTR("red")
+#define kKeyGreen	    CFSTR("green")
+#define kKeyBlue	    CFSTR("blue")
+#define kKeyAlpha	    CFSTR("alpha")
+#define kKeyObjectArray	    CFSTR("objArray")
 
 #endif

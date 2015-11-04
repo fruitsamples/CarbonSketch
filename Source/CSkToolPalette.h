@@ -38,7 +38,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -49,9 +49,13 @@
 #include "CSkUtils.h"
 #include "CSkObjects.h"
 
-
 WindowRef   CSkToolPalette              ( IBNibRef mainNib );
 int         CSkToolPaletteGetTool       ( WindowRef toolPalette );
+
+CSkObjectAttributes* 
+			CSkToolPaletteGetAttributes( WindowRef toolPalette );
+
+// Convenience functions
 float       CSkToolPaletteGetLineWidth  ( WindowRef toolPalette );
 CGLineCap   CSkToolPaletteGetLineCap    ( WindowRef toolPalette );
 CGLineJoin  CSkToolPaletteGetLineJoin   ( WindowRef toolPalette );
@@ -60,8 +64,7 @@ CGrgba*     CSkToolPaletteGetStrokeColor( WindowRef toolPalette, CGrgba* outStro
 void        CSkToolPaletteSetStrokeColor( WindowRef toolPalette, CGrgba* strokeColor );
 CGrgba*     CSkToolPaletteGetFillColor  ( WindowRef toolPalette, CGrgba* outFillColor );
 void        CSkToolPaletteSetFillColor  ( WindowRef toolPalette, CGrgba* fillColor );
-Boolean     CSkToolPaletteGetFilled     ( WindowRef toolPalette );
 void        CSkToolPaletteSetContextState( CGContextRef ctx, WindowRef toolPalette );
-void        CSkToolPaletteSyncPopups    ( const CSkObject* obj );
+void        CSkToolPaletteSyncPopups    ( CSkObject* obj );
 
 #endif

@@ -40,7 +40,7 @@
                 (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
                 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-    Copyright © 2004 Apple Computer, Inc., All Rights Reserved
+    Copyright © 2004-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 
@@ -52,67 +52,78 @@
 #include "CSkConstants.h"
 #include "CSkToolPalette.h"
 
+// CSkObjects (or "DrawObjects" as they were called in the first stages of development) are stored 
+// in a double-linked list. They contain a CSkShapePtr to the geometry definition, and
+// specifications needed for drawing. 
+
 struct CSkObject
 {
-	CSkShapePtr		shape;
-    float           lineWidth;
-    CGLineCap       lineCap;
-    CGLineJoin      lineJoin;
-    int             lineStyle;
-    CGrgba          strokeColor;
-    CGrgba          fillColor;
-    Boolean         filled;
-    Boolean         selected;
-    CSkObjectPtr      nextObj;
-    CSkObjectPtr      prevObj;
+    CSkShapePtr		shape;
+    CSkObjectAttributes	attr;
+    Boolean		selected;
+    CSkObjectPtr	nextObj;
+    CSkObjectPtr	prevObj;
 };
 
 
-void GetLineAttributes(const CSkObject* obj, float* width, CGLineCap* cap, CGLineJoin* join, int* style)
+//------------------------------------------------------------------------------
+CSkObjectAttributes* CSkObjectGetAttributes(CSkObjectPtr obj)
 {
-	if (obj != NULL)
-	{
-		*width  = obj->lineWidth;
-		*cap	= obj->lineCap;
-		*join   = obj->lineJoin;
-		*style  = obj->lineStyle;
-	}
-	else
-	{
-		fprintf(stderr, "GetLineAttributes: NULL obj parameter\n");
-	}
+    return &obj->attr;
 }
 
-//---------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Return the specified line attributes lineWidth, lineCap, lineJoin, lineStyle.
+// No NULL-checks in the out-parameters because 
+// a) the function is only used with parameters &lineWidth, &lineCap, &lineJoin, &lineStyle
+// b) I want to keep the code short
+void GetLineAttributes(const CSkObject* obj, float* width, CGLineCap* cap, CGLineJoin* join, int* style)
+{
+    if (obj != NULL)
+    {
+	*width  = obj->attr.lineWidth;
+	*cap	= obj->attr.lineCap;
+	*join   = obj->attr.lineJoin;
+	*style  = obj->attr.lineStyle;
+    }
+    else
+    {
+	fprintf(stderr, "GetLineAttributes: NULL obj parameter\n");
+    }
+}
+
+//------------------------------------------------------------------------------
 // Allocate new drawObject with attributes from the current settings in the CSkToolPalette.
 // Bounds are empty.
-CSkObjectPtr CreateDrawObj(WindowRef toolPalette, int shapeType)
+CSkObjectPtr CreateCSkObj(CSkObjectAttributes* attributes, CSkShapePtr sh)
 {
     CSkObjectPtr obj = (CSkObjectPtr)NewPtrClear(sizeof(CSkObject));
     if (obj != NULL)
     {
-		SetDrawObjAttributesFromToolPalette(obj, toolPalette);
-		obj->shape = CSkShapeCreate(shapeType);
+	CSkObjectSetAttributes(obj, attributes);
+	obj->shape = sh;
     }
     return obj;
 }
 
-//---------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// After mouse-tracking a selected CSkObject, we need an independent (unlinked) copy of it 
+// to draw during dragging.
 CSkObjectPtr CopyDrawObject(const CSkObject* obj)
 {
     CSkObjectPtr newObj = (CSkObjectPtr)NewPtrClear(sizeof(CSkObject));
     if (newObj)
     {
-		memcpy(newObj, obj, sizeof(CSkObject));
+	memcpy(newObj, obj, sizeof(CSkObject));
         newObj->shape = CSkShapeCreate(kUndefined);
-		memcpy(newObj->shape, obj->shape, CSkShapeSize());
+	memcpy(newObj->shape, obj->shape, CSkShapeSize());
         newObj->nextObj = NULL;
         newObj->prevObj = NULL;
     }
     return newObj;
 }
 
-//---------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void ReleaseDrawObj(CSkObjectPtr obj)
 {
     CSkShapeRelease(obj->shape);
@@ -132,30 +143,26 @@ void ReleaseDrawObjList(DrawObjListPtr objList)
 }
 
 
-//---------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Some obvious accessors
 int GetDrawObjShapeType( const CSkObject* drawObj )
 {
-    return CSkShapeGetType(drawObj->shape);
+    return (drawObj == NULL ? kUndefined : CSkShapeGetType(drawObj->shape));
 }
 
-CSkShape* GetCSkObjectShape( const CSkObject* drawObj )
+CSkShape* CSkObjectGetShape( const CSkObject* drawObj )
 {
-	return drawObj->shape;
+    return (drawObj == NULL ? NULL : drawObj->shape);
 }
 
 float GetFillAlpha( const CSkObject* drawObj )
 {
-	return drawObj->fillColor.a;
+    return drawObj->attr.fillColor.a;
 }
 
 float GetStrokeAlpha( const CSkObject* drawObj )
 {
-	return drawObj->strokeColor.a;
-}
-
-void CopyDrawObjShape( CSkObjectPtr drawObj, CSkShapePtr sh )
-{
-    memcpy(drawObj->shape, sh, CSkShapeSize());   // also covers the case of the two points of a line
+    return drawObj->attr.strokeColor.a;
 }
 
 void SetDrawObjSelectState( CSkObjectPtr drawObj, Boolean selected )
@@ -169,29 +176,24 @@ Boolean IsDrawObjSelected( const CSkObject* drawObj )
 }
 
 
-//----------------------------------------------------------------------------
-void SetDrawObjAttributesFromToolPalette(CSkObjectPtr obj, WindowRef toolPalette)
+//------------------------------------------------------------------------------
+void CSkObjectSetAttributes(CSkObjectPtr obj, CSkObjectAttributes* attributes)
 {
-    obj->lineWidth  = CSkToolPaletteGetLineWidth(toolPalette);
-    obj->lineCap    = CSkToolPaletteGetLineCap(toolPalette);
-    obj->lineJoin   = CSkToolPaletteGetLineJoin(toolPalette);
-    obj->lineStyle  = CSkToolPaletteGetLineStyle(toolPalette);
-    obj->filled		= CSkToolPaletteGetFilled(toolPalette);
-    CSkToolPaletteGetStrokeColor(toolPalette, &obj->strokeColor);
-    CSkToolPaletteGetFillColor(toolPalette, &obj->fillColor);
+    memcpy(&obj->attr, attributes, sizeof(CSkObjectAttributes));
 }
 
-void SetSelectedDrawObjAttributesFromToolPalette(DrawObjListPtr objListP, WindowRef toolPalette)
+void CSkSetObjAttributesIfSelected(DrawObjListPtr objListP, CSkObjectAttributes* attributes)
 {
     CSkObjectPtr obj = objListP->firstItem;
     while (obj != NULL)
     {
         if (obj->selected)
-            SetDrawObjAttributesFromToolPalette(obj, toolPalette);
+            CSkObjectSetAttributes(obj, attributes);
         obj = obj->nextObj;
     }
 }
 
+//------------------------------------------------------------------------------
 void SetLineWidthOfSelecteds(DrawObjListPtr objListP, float lineWidth)
 {
     CSkObjectPtr  obj = objListP->firstItem;
@@ -199,115 +201,105 @@ void SetLineWidthOfSelecteds(DrawObjListPtr objListP, float lineWidth)
     {
         if (obj->selected)
         {
-			if (lineWidth == kMakeItThinner)
-			{
-				if (obj->lineWidth >= 2.0)
-					obj->lineWidth -= 1.0;
-			}
-			else if (lineWidth == kMakeItThicker)
-				obj->lineWidth += 1.0;
-			else
-				obj->lineWidth = lineWidth;
-		}
+	    if (lineWidth == kMakeItThinner)
+	    {
+		if (obj->attr.lineWidth >= 2.0)
+		    obj->attr.lineWidth -= 1.0;
+	    }
+	    else if (lineWidth == kMakeItThicker)
+		obj->attr.lineWidth += 1.0;
+	    else
+		obj->attr.lineWidth = lineWidth;
+	}
         obj = obj->nextObj;
     }
 }
 
-
+//------------------------------------------------------------------------------
 void SetLineCapOfSelecteds(DrawObjListPtr objListP, CGLineCap lineCap)
 {
     CSkObjectPtr  obj = objListP->firstItem;
     while (obj != NULL)
     {
         if (obj->selected)
-            obj->lineCap = lineCap;
+            obj->attr.lineCap = lineCap;
         obj = obj->nextObj;
     }
 }
 
-
+//------------------------------------------------------------------------------
 void SetLineJoinOfSelecteds(DrawObjListPtr objListP, CGLineJoin lineJoin)
 {
     CSkObjectPtr  obj = objListP->firstItem;
     while (obj != NULL)
     {
         if (obj->selected)
-            obj->lineJoin = lineJoin;
+            obj->attr.lineJoin = lineJoin;
         obj = obj->nextObj;
     }
 }
 
-
+//------------------------------------------------------------------------------
 void SetLineStyleOfSelecteds(DrawObjListPtr objListP, int lineStyle)
 {
     CSkObjectPtr  obj = objListP->firstItem;
     while (obj != NULL)
     {
         if (obj->selected)
-            obj->lineStyle = lineStyle;
+            obj->attr.lineStyle = lineStyle;
         obj = obj->nextObj;
     }
 }
 
-
+//------------------------------------------------------------------------------
 void SetStrokeColorOfSelecteds(DrawObjListPtr objListP, CGrgba* color)
 {
     CSkObjectPtr  obj = objListP->firstItem;
     while (obj != NULL)
     {
         if (obj->selected)
-            obj->strokeColor = *color;
+            obj->attr.strokeColor = *color;
         obj = obj->nextObj;
     }
 }
 
+//------------------------------------------------------------------------------
 void SetStrokeAlphaOfSelecteds(DrawObjListPtr objListP, float alpha)
 {
     CSkObjectPtr  obj = objListP->firstItem;
     while (obj != NULL)
     {
         if (obj->selected)
-            obj->strokeColor.a = alpha;
+            obj->attr.strokeColor.a = alpha;
         obj = obj->nextObj;
     }
 }
 
+//------------------------------------------------------------------------------
 void SetFillColorOfSelecteds(DrawObjListPtr objListP, CGrgba* color)
 {
     CSkObjectPtr  obj = objListP->firstItem;
     while (obj != NULL)
     {
         if (obj->selected)
-            obj->fillColor = *color;
+            obj->attr.fillColor = *color;
         obj = obj->nextObj;
     }
 }
 
+//------------------------------------------------------------------------------
 void SetFillAlphaOfSelecteds(DrawObjListPtr objListP, float alpha)
 {
     CSkObjectPtr  obj = objListP->firstItem;
     while (obj != NULL)
     {
         if (obj->selected)
-            obj->fillColor.a = alpha;
+            obj->attr.fillColor.a = alpha;
         obj = obj->nextObj;
     }
 }
 
-
-void SetFilledOfSelecteds(DrawObjListPtr objListP, Boolean filled)
-{
-    CSkObjectPtr  obj = objListP->firstItem;
-    while (obj != NULL)
-    {
-        if (obj->selected)
-                obj->filled = filled;
-        obj = obj->nextObj;
-    }
-}
-
-
-//--------------------------------------------------------
+//------------------------------------------------------------------------------
 CSkObjectPtr FirstSelectedObject(const DrawObjList* objListP)
 {
     CSkObjectPtr  obj = objListP->firstItem;
@@ -320,7 +312,8 @@ CSkObjectPtr FirstSelectedObject(const DrawObjList* objListP)
     return NULL;
 }
 
-//------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Needed for dragselection of several objects
 void CSkObjListSelectWithinRect(DrawObjList* objListP, CGRect selectionRect)
 {
     CSkObjectPtr  obj = objListP->firstItem;
@@ -333,8 +326,26 @@ void CSkObjListSelectWithinRect(DrawObjList* objListP, CGRect selectionRect)
     }
 }
 
-//-------------------------------------------------------------------------
-static void DrawOval(CGContextRef ctx, CGRect cgRect, Boolean filled)
+
+//-------------------------------------------
+///////////// Drawing Routines //////////////
+//
+// We don't distinguish between "filled" and "not filled"; the result
+// "stroke only" is achieved by setting the fillColor alpha to fully
+// transparent. Similarly, if we want "filled only", we have to set
+// the alpha of the strokeColor to 0.
+// Consequently, we always pass kCGPathFillStroke to CGContextDrawPath.
+
+//------------------------------------------------------------------------------
+static void DrawRect(CGContextRef ctx, CGRect cgRect)
+{
+    CGContextBeginPath(ctx);			// reset current path to empty
+    CGContextAddRect(ctx, cgRect);		// current path now represents cgRect
+    CGContextDrawPath(ctx, kCGPathFillStroke);
+}
+
+//------------------------------------------------------------------------------
+static void DrawOval(CGContextRef ctx, CGRect cgRect)
 {
     const float TWOPI   = 6.283185307;
     float   halfWidth   = 0.5 * CGRectGetWidth(cgRect);
@@ -359,46 +370,43 @@ static void DrawOval(CGContextRef ctx, CGRect cgRect, Boolean filled)
         centerY = cgRect.origin.y + halfHeight;
     }
 
-    CGContextSaveGState(ctx);
-    CGContextScaleCTM(ctx, scaleX, scaleY);  
+    CGContextSaveGState(ctx);				// because we temporarily change the CTM
+    CGContextScaleCTM(ctx, scaleX, scaleY);  // so the full-circle arc will appear as oval
     CGContextBeginPath(ctx);
     CGContextAddArc(ctx, centerX, centerY, radius, 0.0, TWOPI, 0);
     CGContextClosePath(ctx);
-    CGContextRestoreGState(ctx);                 
+    CGContextRestoreGState(ctx);	// back to the previous CTM
 
-    if (filled)
-        CGContextFillPath(ctx);
-	else
-		CGContextStrokePath(ctx);
+	CGContextDrawPath(ctx, kCGPathFillStroke);
 }
 
-//--------------------------------------------------------------------------------------
-static void DrawRRect(CGContextRef ctx, CGRect cgRect, float rX, float rY, Boolean filled)
+//------------------------------------------------------------------------------
+static void DrawRRect(CGContextRef ctx, CGRect cgRect, CGPoint radii)
 {
 	CGContextBeginPath(ctx);
 
-    if ((rX > 0) && (rY > 0))
+    if ((radii.x > 0) && (radii.y > 0))
     {
         float width     = CGRectGetWidth(cgRect);
         float height    = CGRectGetHeight(cgRect);
-        float fw        = width / rX;
-        float fh        = height / rY;
+        float fw        = width / radii.x;
+        float fh        = height / radii.y;
 
         if (fw < 2)
         {
-            rX = width / 2;
+            radii.x = width / 2;
             fw = 2;
         }
         
         if (fh < 2)
         {
-            rY = height / 2;
+            radii.y = height / 2;
             fh = 2;
         }
 
         CGContextSaveGState(ctx);
         CGContextTranslateCTM(ctx, CGRectGetMinX(cgRect), CGRectGetMinY(cgRect));
-        CGContextScaleCTM(ctx, rX, rY);
+        CGContextScaleCTM(ctx, radii.x, radii.y);
         CGContextMoveToPoint(ctx, fw, fh/2);
         CGContextAddArcToPoint(ctx, fw, fh, fw/2, fh, 1);
         CGContextAddArcToPoint(ctx, 0, fh, 0, fh/2, 1);
@@ -412,108 +420,146 @@ static void DrawRRect(CGContextRef ctx, CGRect cgRect, float rX, float rY, Boole
     }           
     
     CGContextClosePath(ctx);
-    if (filled)
-		CGContextFillPath(ctx);
-	else
-		CGContextStrokePath(ctx);
+    CGContextDrawPath(ctx, kCGPathFillStroke);
 }
 
-//--------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static void DrawCGLine(CGContextRef ctx, CGPoint a, CGPoint b)
 {
     CGContextMoveToPoint( ctx, a.x, a.y );
     CGContextAddLineToPoint( ctx, b.x, b.y );
-    CGContextStrokePath( ctx );
+    CGContextStrokePath(ctx);
 }
 
-//--------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+static void DrawCGQuad(CGContextRef ctx, CGPoint a, CGPoint b, CGPoint c)
+{
+    CGContextMoveToPoint( ctx, a.x, a.y );
+    CGContextAddQuadCurveToPoint( ctx, b.x, b.y, c.x, c.y );
+    CGContextDrawPath(ctx, kCGPathFillStroke);
+}
+
+//------------------------------------------------------------------------------
+static void DrawCGCubic(CGContextRef ctx, CGPoint a, CGPoint b, CGPoint c, CGPoint d)
+{
+    CGContextMoveToPoint( ctx, a.x, a.y );
+    CGContextAddCurveToPoint( ctx, b.x, b.y, c.x, c.y, d.x, d.y );
+    CGContextDrawPath(ctx, kCGPathFillStroke);
+}
+
+//------------------------------------------------------------------------------
+static void DrawPath(CGContextRef ctx, CGPathRef path)
+{
+    CGContextAddPath(ctx, path);
+    CGContextDrawPath(ctx, kCGPathFillStroke);
+}
+
+//------------------------------------------------------------------------------
 // Keep this separate from RenderCSkObject; this way, RenderCSkObject can
 // be reused from within the mousetracking loops when drawing into an overlay window.
 void SetContextStateForDrawObject(CGContextRef ctx, const CSkObject* obj)
 {
-    CGContextSetLineWidth(ctx, obj->lineWidth);
-    CGContextSetLineCap(ctx, obj->lineCap);
-    CGContextSetLineJoin(ctx, obj->lineJoin);
-    if (obj->lineStyle == kStyleDashed)
+    CGContextSetLineWidth(ctx, obj->attr.lineWidth);
+    CGContextSetLineCap(ctx, obj->attr.lineCap);
+    CGContextSetLineJoin(ctx, obj->attr.lineJoin);
+    if (obj->attr.lineStyle == kStyleDashed)
     {
-        float dashLengths[2] = { obj->lineWidth + 4, obj->lineWidth + 4 };
+        CGFloat dashLengths[2] = { obj->attr.lineWidth + 4, obj->attr.lineWidth + 4 };
         CGContextSetLineDash(ctx, 1.0, dashLengths, 2);
     }
     
-    CGContextSetStrokeColor( ctx, (float *)&(obj->strokeColor));
-    CGContextSetFillColor( ctx, (float *)&(obj->fillColor));
+    CGContextSetStrokeColor( ctx, (CGFloat *)&(obj->attr.strokeColor));
+    CGContextSetFillColor( ctx, (CGFloat *)&(obj->attr.fillColor));
 }
 
 
-//--------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// RenderCSkObject is being called from RenderDrawObjList, and also during MouseTracking
+// (see CSkDocumentView.c). 
 void RenderCSkObject(CGContextRef ctx, const CSkObject* obj, Boolean drawSelection)
 {
-    int		shapeType   = CSkShapeGetType(obj->shape);
+    int	    shapeType   = CSkShapeGetType(obj->shape);
+    CGPoint* ptP	= CSkShapeGetPoints(obj->shape);
     CGRect  shapeBounds = CSkShapeGetBounds(obj->shape);
-	CGPoint a, b;
 	
-	CGContextSaveGState(ctx);
-
-	if ( shapeType == kLineShape )
-	{
-		CSkShapeGetLine(obj->shape, &a, &b);
-		DrawCGLine(ctx, a, b);
-	}
-	else switch (shapeType)
-	{
-		case kRectShape:
-			if (obj->filled)
-				CGContextFillRect(ctx, shapeBounds);
-			CGContextStrokeRect(ctx, shapeBounds);
-			break;
-			
-		case kOvalShape:
-			if (obj->filled)
-				DrawOval(ctx, shapeBounds, true);
-			DrawOval(ctx, shapeBounds, false);
-			break;
-		
-		case kRRectShape:
-			{
-				float rX, rY;
-				CSkShapeGetRRectRadii(obj->shape, &rX, &rY);
-				if (obj->filled)
-					DrawRRect(ctx, shapeBounds, rX, rY, true);
-				DrawRRect(ctx, shapeBounds, rX, rY, false);
-			}
-			break;
-	}
-	
-	CGContextRestoreGState(ctx);
+    switch (shapeType)
+    {
+	case kLineShape:    DrawCGLine(ctx, ptP[0], ptP[1]);			break;
+	case kQuadBezier:   DrawCGQuad(ctx, ptP[0], ptP[1], ptP[2]);		break;
+	case kCubicBezier:  DrawCGCubic(ctx, ptP[0], ptP[1], ptP[2], ptP[3]);   break;	    
+	case kRectShape:    DrawRect(ctx, shapeBounds);				break;
+	case kOvalShape:    DrawOval(ctx, shapeBounds);				break;
+	case kFreePolygon:  DrawPath(ctx, CSkShapeGetPath(obj->shape));		break;
+	case kRRectShape:   
+	    DrawRRect(ctx, shapeBounds, CSkShapeGetRRectRadii(obj->shape));	break;
+    }
 	
     if (drawSelection && obj->selected)  // draw little "grabber" squares
     {
-        DrawSelectionGrabbers(ctx, obj->shape);
-    }
-}
+	CGRect  grabRect;
+	int	grabber = 0;
+	
+	CGContextSaveGState(ctx);	// because we are changing colors and line width
+	
+	CGContextSetRGBFillColor(ctx, 0.9, 0.9, 0.9, 0.7);  // ltGray, a little transparent
+	CGContextSetRGBStrokeColor(ctx, 0, 0, 0, 1.0);      // black
+	CGContextSetLineWidth(ctx, 1.0);
 
-//---------------------------------------------------------------------------------------------
+	while (NextGrabberRect(obj->shape, &grabber, &grabRect))
+	{
+	    DrawRect(ctx, grabRect);
+	    // Alternatively:
+	    // CGContextStrokeRect(ctx, grabRect);
+	    // CGContextFillRect(ctx, grabRect);
+	}
+	
+	if ((shapeType == kQuadBezier) || (shapeType == kCubicBezier))	// show control line segments
+	{
+	    CGContextSetLineWidth(ctx, 0.4);
+	    grabber = 0;
+	    NextGrabberRect(obj->shape, &grabber, &grabRect);
+	    CGContextMoveToPoint(ctx, grabRect.origin.x + 0.5 * grabRect.size.width, 
+				    grabRect.origin.y + 0.5 * grabRect.size.height);
+	    while (NextGrabberRect(obj->shape, &grabber, &grabRect)) 
+	    {
+		CGContextAddLineToPoint(ctx, grabRect.origin.x + 0.5 * grabRect.size.width, 
+					    grabRect.origin.y + 0.5 * grabRect.size.height);		
+	    }
+	    CGContextStrokePath(ctx);
+	}
+	
+	CGContextRestoreGState(ctx);
+    }
+}	// RenderCSkObject
+
+//------------------------------------------------------------------------------
+// Draw the CSkObjects in the linked list from back to front. For each object, the GState needs
+// to be saved and restored.
 void  RenderDrawObjList(CGContextRef ctx, const DrawObjList* objListP, Boolean drawSelection)
 {
     CSkObjectPtr obj = objListP->lastItem;    // draw from back to front
     while (obj != NULL)
     {
-		SetContextStateForDrawObject(ctx, obj);
+	CGContextSaveGState(ctx);	// because SetContextStateForDrawObject is doing what it says it will
+	SetContextStateForDrawObject(ctx, obj);
         RenderCSkObject(ctx, obj, drawSelection);
+	CGContextRestoreGState(ctx);	// undo the changes for the specific obj drawing
         obj = obj->prevObj;
     }
 }
 
 
-//---------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Multiply in a transparency factor. Used for tracking feedback when resizing an object.
 void MakeDrawObjTransparent(CSkObject* obj, float alpha)
 {
-    obj->strokeColor.a *= alpha;
-    obj->fillColor.a *= alpha;
+    obj->attr.strokeColor.a *= alpha;
+    obj->attr.fillColor.a *= alpha;
 }
 
-//---------------------------------------------------------------------------------------------
-// The following is used during moving selected objects around (ctx is overlayWindowContext)
+//------------------------------------------------------------------------------
+// The following is used during moving selected objects around (ctx is overlayWindowContext).
+// Draw the selected objects only, and with an additional alpha multiplied in for more transparency.
 void  RenderSelectedDrawObjs(CGContextRef ctx, const DrawObjList* objListP, float offsetX, float offsetY, float alpha)
 {
     CSkObjectPtr obj = objListP->lastItem;    // draw from back to front
@@ -523,22 +569,23 @@ void  RenderSelectedDrawObjs(CGContextRef ctx, const DrawObjList* objListP, floa
     {
         if (obj->selected)
         {
-            CGrgba saveStrokeColor  = obj->strokeColor;
-            CGrgba saveFillColor    = obj->fillColor;
+            CGrgba saveStrokeColor  = obj->attr.strokeColor;
+            CGrgba saveFillColor    = obj->attr.fillColor;
             
-            obj->strokeColor.a *= alpha;
-            obj->fillColor.a *= alpha;
-            SetContextStateForDrawObject(ctx, obj);
+	    MakeDrawObjTransparent(obj, alpha);
+	    SetContextStateForDrawObject(ctx, obj);
             RenderCSkObject(ctx, obj, true);
-            obj->strokeColor = saveStrokeColor;
-            obj->fillColor = saveFillColor;
+			
+            obj->attr.strokeColor = saveStrokeColor;
+            obj->attr.fillColor = saveFillColor;
         }
         obj = obj->prevObj;
     }
     CGContextRestoreGState(ctx);   
 }
 
-//---------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Called at the end of mouse tracking when selected objects have been moved
 void  MoveSelectedDrawObjs(DrawObjList* objListP, float offsetX, float offsetY)
 {
     CSkObjectPtr obj = objListP->firstItem;
@@ -546,14 +593,15 @@ void  MoveSelectedDrawObjs(DrawObjList* objListP, float offsetX, float offsetY)
     {
         if (obj->selected)
         {
-			CSkShapeOffset(obj->shape, offsetX, offsetY);
+	    CSkShapeOffset(obj->shape, offsetX, offsetY);
         }
         obj = obj->nextObj;
     }
 }
 
 
-//---------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Select all, or deselect all
 void CSkObjListSetSelectState(DrawObjListPtr objList, Boolean state)
 {
     CSkObjectPtr obj = objList->firstItem;
@@ -566,7 +614,8 @@ void CSkObjListSetSelectState(DrawObjListPtr objList, Boolean state)
 }
 
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Called when reording objects in the list
 static CSkObjectPtr GetFirstSelectedDrawObj(const DrawObjList* objList)
 {
     CSkObjectPtr  obj = objList->firstItem;
@@ -585,10 +634,12 @@ static CSkObjectPtr GetFirstSelectedDrawObj(const DrawObjList* objList)
 }
 
 
-//---------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Some obvious linked list management routines
+
 void AddDrawObjToList(DrawObjListPtr objList, CSkObjectPtr obj)
 {
-    CSkObjectPtr	firstObj = objList->firstItem;
+    CSkObjectPtr firstObj = objList->firstItem;
     
     obj->prevObj = NULL;     // always put it in front of the list
     obj->nextObj = firstObj;
@@ -623,7 +674,7 @@ static void RemoveDrawObjFromList(DrawObjListPtr objList, const CSkObject* obj)
         objList->lastItem = obj->prevObj;
 }
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void RemoveSelectedDrawObjs(DrawObjListPtr objList)
 {
     CSkObjectPtr	obj = objList->firstItem;
@@ -638,7 +689,7 @@ void RemoveSelectedDrawObjs(DrawObjListPtr objList)
     }
 }
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static void InsertDrawObjBefore(DrawObjListPtr objList, CSkObjectPtr obj, CSkObjectPtr beforeObj)
 {
     CSkObjectPtr prevObj = beforeObj->prevObj;
@@ -655,7 +706,7 @@ static void InsertDrawObjBefore(DrawObjListPtr objList, CSkObjectPtr obj, CSkObj
 }
 
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static void InsertDrawObjAfter(DrawObjListPtr objList, CSkObjectPtr obj, CSkObjectPtr afterObj)
 {
     CSkObjectPtr nextObj = afterObj->nextObj;
@@ -671,20 +722,20 @@ static void InsertDrawObjAfter(DrawObjListPtr objList, CSkObjectPtr obj, CSkObje
         objList->lastItem = obj;
 }
 
-//----------------------------------------------------------------------
-static void DuplicateDrawObj(DrawObjListPtr objList, CSkObjectPtr obj, CGPoint offset)
+//------------------------------------------------------------------------------
+static void DuplicateDrawObj(DrawObjListPtr objList, CSkObjectPtr obj, float dx, float dy)
 {
     CSkObjectPtr tempObj = CopyDrawObject(obj);
     // Always deselect the original and select the new
     obj->selected = false;
     tempObj->selected = true;
 //  tempObj->bounds = CGRectOffset(tempObj->bounds, offset.x, offset.y);    -- this normalizes the rect, which is not what we want for lines
-    CSkShapeOffset(tempObj->shape, offset.x, offset.y);
+    CSkShapeOffset(tempObj->shape, dx, dy);
     InsertDrawObjBefore(objList, tempObj, obj);
 }
 
-//----------------------------------------------------------------------
-void DuplicateSelectedDrawObjs(DrawObjListPtr objList, CGPoint offset)
+//------------------------------------------------------------------------------
+void DuplicateSelectedDrawObjs(DrawObjListPtr objList, float dx, float dy)
 {
     CSkObjectPtr	obj = objList->firstItem;
     while (obj != NULL)
@@ -692,14 +743,14 @@ void DuplicateSelectedDrawObjs(DrawObjListPtr objList, CGPoint offset)
         CSkObjectPtr nextObj = obj->nextObj;
         if (obj->selected)
         {
-            DuplicateDrawObj(objList, obj, offset);
+            DuplicateDrawObj(objList, obj, dx, dy);
         }
         obj = nextObj;
     }
 }
 
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void MoveObjectForward(DrawObjListPtr objList)
 {
     CSkObjectPtr obj = GetFirstSelectedDrawObj(objList);
@@ -717,7 +768,7 @@ void MoveObjectForward(DrawObjListPtr objList)
     }
 }
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void MoveObjectBackward(DrawObjListPtr objList)
 {
     CSkObjectPtr obj = GetFirstSelectedDrawObj(objList);
@@ -735,26 +786,26 @@ void MoveObjectBackward(DrawObjListPtr objList)
     }
 }
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void MoveObjectToFront(DrawObjListPtr objList)
 {
     CSkObjectPtr obj = GetFirstSelectedDrawObj(objList);
     if ((obj != NULL) && (obj != objList->firstItem))
     {
-        RemoveDrawObjFromList(objList, obj);     // pull obj out of list
-        AddDrawObjToList(objList, obj);        // add it in front
+        RemoveDrawObjFromList(objList, obj);	// pull obj out of list
+        AddDrawObjToList(objList, obj);		// add it in front
     }
 }
 
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void MoveObjectToBack(DrawObjListPtr objList)
 {
     CSkObjectPtr obj = GetFirstSelectedDrawObj(objList);
     if ((obj != NULL) && (obj != objList->lastItem))
     {
-        RemoveDrawObjFromList(objList, obj);         // pull obj out of list
-        obj->prevObj = objList->lastItem;   // hook it in at the end
+        RemoveDrawObjFromList(objList, obj);    // pull obj out of list
+        obj->prevObj = objList->lastItem;	// hook it in at the end
         obj->prevObj->nextObj = obj;
         objList->lastItem = obj;
         obj->nextObj = NULL;
@@ -762,111 +813,155 @@ void MoveObjectToBack(DrawObjListPtr objList)
 }
 
 
-//--------------------------------------------------------------------------------------
-#if 0
-/*
-static CSkObjectPtr* GetSelectedObjects(DrawObjListPtr objList, ItemCount* objCount)
-{
-    // Count how many objects in list are currently selected
-    ItemCount   count   = 0;
-    CSkObjectPtr  obj     = objList->firstItem;
-    CSkObjectPtr* objArray;
-    
-    while (obj != NULL)
-    {
-        if (obj->selected)
-            count += 1;
-        obj = obj->nextObj;
-    }
-    objArray = (CSkObjectPtr*)NewPtr(sizeof(CSkObjectPtr) * count);
-    if (objArray != NULL)
-    {
-        obj = objList->firstItem;
-        while (obj != NULL)
-        {
-            if (obj->selected)
-                *objArray++ = obj;
-            obj = obj->nextObj;
-        }
-    }
-    else
-    {
-        count = 0;
-    }
-    *objCount = count;
-    return objArray - count;
-}
-*/
-#endif
-
-
-//--------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Return the first (front-to-back) object hit by docPt, or NULL.
-// If hit, *outFlags contains which "grabber" handle has been hit, if any (numbered 1..nGrabbers)
-CSkObjectPtr DrawObjListHitTesting(DrawObjListPtr objList, CGContextRef bmCtx, CGAffineTransform m, CGPoint windowCtxPt, CGPoint docPt, UInt32* grabNum)
+// If hit, *outFlags contains which "grabber" handle has been hit, if any (numbered 1..nGrabbers).
+// Note the use of a 1x1-pixel CGBitmapContext bmCtx for hit-testing. We keep it around and pass it in;
+// but you could also create it on the spot.
+CSkObjectPtr DrawObjListHitTesting(DrawObjListPtr objList, CGContextRef bmCtx, CGAffineTransform m, 
+				    CGPoint windowCtxPt, CGPoint docPt, int* outGrabber)
 {
-    UInt32*     baseAddr    = (UInt32*)CGBitmapContextGetData(bmCtx);   // Assume 4 bytes per pixel!
-    CSkObjectPtr  obj		= objList->firstItem;                       // traverse front to back
+    UInt32*	    baseAddr	= (UInt32*)CGBitmapContextGetData(bmCtx);   // Assume 4 bytes per pixel!
+    CSkObjectPtr    obj		= objList->firstItem;                       // traverse front to back
+    int		    hitGrabber  = -1;
+    Boolean	    hit		= false;
 	
-    CGContextSaveGState(bmCtx);
-    CGContextConcatCTM(bmCtx, m);                                       // assuming the ctx's CTM is the identity
+    CGContextSaveGState(bmCtx);						// because we are temporarily changing the CTM
     CGContextTranslateCTM( bmCtx, -windowCtxPt.x, -windowCtxPt.y );     // move 1x1 bitmap context to "windowCtxPt"
+    CGContextConcatCTM(bmCtx, m);                                       // apply document transform for drawing
     
-    while (obj != NULL)
+    while ((obj != NULL) && !hit)
     {
-		int		shapeType   = CSkShapeGetType(obj->shape);
-        float   d			= 0.5 * obj->lineWidth;
-        CGRect  cgR			= CSkShapeGetBounds(obj->shape);
-		
-		cgR = CGRectInset(cgR, -d, -d);
+	int	shapeType   = CSkShapeGetType(obj->shape);
+        float   d	    = 0.5 * obj->attr.lineWidth;
+        CGRect  cgR	    = CSkShapeGetBounds(obj->shape);
+	
+	cgR = CGRectInset(cgR, -d, -d);
         
         if (CGRectContainsPoint(cgR, docPt))
         {
-			cgR = CGRectInset(cgR, d, d);   // restore original shape bounds
+	    cgR = CGRectInset(cgR, d, d);   // restore original shape bounds
 			
             // If the obj is selected, check for a hit in the grabbers first since they overlap the obj
-            if (obj->selected && (grabNum != NULL))
+            if (obj->selected && (outGrabber != NULL))
             {
-                *grabNum = FindGrabberHit(obj->shape, docPt);
-                if (*grabNum > 0)
+                hitGrabber = FindGrabberHit(obj->shape, docPt);
+                if (hitGrabber > 0)
                 {
-//					fprintf(stderr, "0x%x: grabber %d hit\n", (uint)obj, *grabNum);
-					break;                      // done - return obj
+		    hit = true;
+		    break;                      // done - return obj
                 }
              }
 
             if (shapeType == kRectShape)
             {
-//				fprintf(stderr, "0x%x: Rectangle hit\n", (uint)obj);
+		hit = true;
                 break;                          // done - return obj
             }
             
-            // Horizontal or vertical line?
+            // Horizontal or vertical line? Hit if CGRectContainsPoint
             if  (   (shapeType == kLineShape)
                 &&  ((cgR.size.height == 0) || (cgR.size.width == 0))
                 )
             {
-//				fprintf(stderr, "0x%x: Horz/Vert Line hit\n", (uint)obj);
+		hit = true;
                 break;                          // done - return obj
             }
 
             // If none of the above, draw the object into the bitmapContext, and check whether this changed the point
-			cgR = CGRectInset(cgR, -d, -d);		// outset once more
-            CGContextClearRect(bmCtx, cgR);
+	    cgR = CGRectInset(cgR, -d, -d);		// outset once more
+	    *baseAddr = 0;				// clear the pixel in bmCtx
             SetContextStateForDrawObject(bmCtx, obj);
             RenderCSkObject(bmCtx, obj, true);
             
             if (*baseAddr != 0)     // got it!
             {
-//				fprintf(stderr, "0x%x: BitmapContext hit\n", (uint)obj);
+		hit = true;
                 break;                          // done - return obj
             }
         }
-        obj = obj->nextObj;
+		
+	if (!hit)
+	    obj = obj->nextObj;
     }
     
-    // obj == NULL if there was no hit
-    
+    if (outGrabber) 
+	*outGrabber = hitGrabber;
+
     CGContextRestoreGState(bmCtx);
-    return  obj;
+
+    return  obj;    //  == NULL if there was no hit
+}
+
+//------------------------------------------------------------------------------
+static void AddAttributesToDict(CSkObjectAttributes* attr, CFMutableDictionaryRef objDict)
+{
+    AddFloatToDict(objDict, kKeyLineWidth, attr->lineWidth);
+    AddIntegerToDict(objDict, kKeyLineCap, attr->lineCap);
+    AddIntegerToDict(objDict, kKeyLineJoin, attr->lineJoin);
+    AddIntegerToDict(objDict, kKeyLineStyle, attr->lineStyle);
+    AddRGBAColorToDict(objDict, kKeyStrokeColor, &attr->strokeColor);
+    AddRGBAColorToDict(objDict, kKeyFillColor, &attr->fillColor);
+}
+
+//------------------------------------------------------------------------------
+static void 
+GetAttributesFromObjDict(CFDictionaryRef objDict, CSkObjectAttributes* attr)
+{
+    attr->lineWidth = GetFloatFromDict(objDict, kKeyLineWidth);
+    attr->lineCap = GetIntegerFromDict(objDict, kKeyLineCap);
+    attr->lineJoin = GetIntegerFromDict(objDict, kKeyLineJoin);
+    attr->lineStyle = GetIntegerFromDict(objDict, kKeyLineStyle);
+    GetRGBAColorFromDict(objDict, kKeyStrokeColor, &attr->strokeColor);
+    GetRGBAColorFromDict(objDict, kKeyFillColor, &attr->fillColor);
+}
+
+
+
+//------------------------------------------------------------------------------
+CFMutableArrayRef CSkObjectListConvertToCFArray(CSkObjectPtr objPtr)
+{
+    CFMutableArrayRef objArray 
+	= CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+	
+    if (objArray != NULL)
+    {
+	while (objPtr != NULL)
+	{
+	    CFMutableDictionaryRef objDict 
+		= CFDictionaryCreateMutable(kCFAllocatorDefault, 0, 
+					    &kCFTypeDictionaryKeyCallBacks, 
+					    &kCFTypeDictionaryValueCallBacks);
+	    AddCSkShapeToDict(objPtr->shape, objDict);
+	    AddAttributesToDict(&objPtr->attr, objDict);
+	    CFArrayAppendValue(objArray, objDict);
+	    CFRelease(objDict);
+	    objPtr = objPtr->nextObj;
+	}
+    }
+    return objArray;
+}
+
+//------------------------------------------------------------------------------
+static CSkObjectPtr CSkCreateObjFromDict(CFDictionaryRef objDict)
+{
+    CSkObjectAttributes attr;
+    GetAttributesFromObjDict(objDict, &attr);
+    CSkShape* sh = CreateCSkShapeFromDict(objDict);
+    CSkObjectPtr objPtr = CreateCSkObj(&attr, sh);
+    return objPtr;
+}
+
+//------------------------------------------------------------------------------
+void CSkConvertCFArrayToDrawObjectList(CFArrayRef objArray, DrawObjList* objList)
+{
+    objList->firstItem = objList->lastItem = NULL;
+    
+    CFIndex i = CFArrayGetCount(objArray);
+    while (--i >= 0)
+    {
+	CFDictionaryRef objDict = CFArrayGetValueAtIndex(objArray, i);
+	CSkObjectPtr obj = CSkCreateObjFromDict(objDict);
+	AddDrawObjToList(objList, obj);	
+    }
 }
